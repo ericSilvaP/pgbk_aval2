@@ -1,6 +1,9 @@
-node_modules
 dist
+build
 coverage
+node_modules
+.eslintcache
+.env
 .husky/_
 .agents
 .codex
