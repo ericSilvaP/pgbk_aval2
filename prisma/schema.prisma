@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TripRequestStatus {
+  pending
+  canceled
+}
+
+model TripRequest {
+  id             String            @id @default(uuid())
+  requesterName  String            @map("requester_name")
+  origin         String
+  destination    String
+  departureAt    DateTime          @map("departure_at")
+  returnAt       DateTime          @map("return_at")
+  purpose        String
+  passengerCount Int               @map("passenger_count")
+  status         TripRequestStatus @default(pending)
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  @@map("trip_requests")
+}
