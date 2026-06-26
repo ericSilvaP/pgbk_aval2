@@ -36,16 +36,16 @@
 
 **⚠️ CRITICAL**: No user story work should begin until this phase is complete
 
-- [ ] T004 [P] Create the trip request repository contract in `src/repositories/trip-request-repository.ts`, with completion confirmed when the creation flow can import a typed repository abstraction from that file.
-- [ ] T005 [P] Create the holidays provider contract in `src/providers/holidays-provider.ts`, with completion confirmed when the creation flow can import a typed `HolidaysProvider` abstraction from that file.
-- [ ] T006 Create the application factory with injectable repository and holidays-provider dependencies in `src/app.ts`, with completion confirmed when the app can be instantiated with custom test doubles that satisfy `T004` and `T005`.
-- [ ] T007 [P] Create the trip request request schema and shared validation helpers in `src/validation/trip-request-schemas.ts`, with completion confirmed when controllers and services can import the request contract from that file.
-- [ ] T008 [P] Create the trip request response mapper and standardized success helper in `src/responses/trip-request-response-mapper.ts` and `src/responses/send-success-response.ts`, with completion confirmed when successful creation responses can be shaped through those files only.
-- [ ] T009 Create the Prisma-backed trip request repository in `src/repositories/prisma-trip-request-repository.ts`, with completion confirmed when the repository contract from `T004` is implemented against PostgreSQL persistence.
-- [ ] T010 Create the BrasilAPI-backed holidays provider in `src/providers/brasil-api-holidays-provider.ts`, with completion confirmed when the provider contract from `T005` is implemented using `HOLIDAYS_API_BASE_URL`.
-- [ ] T011 Create the create-trip-request controller in `src/controllers/create-trip-request-controller.ts`, with completion confirmed when the controller delegates request handling without embedding direct persistence or provider calls.
-- [ ] T012 Register the trip request route and production dependency wiring in `src/routes/trip-request.routes.ts`, `src/routes/index.ts`, `src/index.ts`, and `src/server.ts`, with completion confirmed when `POST /trip-requests` resolves through the application factory.
-- [ ] T013 Create centralized create-flow error constructors and HTTP mappings in `src/errors/app-error.ts` and `src/errors/error-handler.ts`, with completion confirmed when validation, holiday, provider, and unexpected errors can be emitted through the centralized handler only.
+- [X] T004 [P] Create the trip request repository contract in `src/repositories/trip-request-repository.ts`, with completion confirmed when the creation flow can import a typed repository abstraction from that file.
+- [X] T005 [P] Create the holidays provider contract in `src/providers/holidays-provider.ts`, with completion confirmed when the creation flow can import a typed `HolidaysProvider` abstraction from that file.
+- [X] T006 Create the application factory with injectable repository and holidays-provider dependencies in `src/app.ts`, with completion confirmed when the app can be instantiated with custom test doubles that satisfy `T004` and `T005`.
+- [X] T007 [P] Create the trip request request schema and shared validation helpers in `src/validation/trip-request-schemas.ts`, with completion confirmed when controllers and services can import the request contract from that file.
+- [X] T008 [P] Create the trip request response mapper and standardized success helper in `src/responses/trip-request-response-mapper.ts` and `src/responses/send-success-response.ts`, with completion confirmed when successful creation responses can be shaped through those files only.
+- [X] T009 Create the Prisma-backed trip request repository in `src/repositories/prisma-trip-request-repository.ts`, with completion confirmed when the repository contract from `T004` is implemented against PostgreSQL persistence.
+- [X] T010 Create the BrasilAPI-backed holidays provider in `src/providers/brasil-api-holidays-provider.ts`, with completion confirmed when the provider contract from `T005` is implemented using `HOLIDAYS_API_BASE_URL`.
+- [X] T011 Create the create-trip-request controller in `src/controllers/create-trip-request-controller.ts`, with completion confirmed when the controller delegates request handling without embedding direct persistence or provider calls.
+- [X] T012 Register the trip request route and production dependency wiring in `src/routes/trip-request.routes.ts`, `src/routes/index.ts`, `src/index.ts`, and `src/server.ts`, with completion confirmed when `POST /trip-requests` resolves through the application factory.
+- [X] T013 Create centralized create-flow error constructors and HTTP mappings in `src/errors/app-error.ts` and `src/errors/error-handler.ts`, with completion confirmed when validation, holiday, provider, and unexpected errors can be emitted through the centralized handler only.
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in priority order
 
