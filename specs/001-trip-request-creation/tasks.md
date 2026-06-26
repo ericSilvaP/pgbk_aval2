@@ -24,9 +24,9 @@
 
 **Purpose**: Prepare the project structure and test harness entry points needed for the feature
 
-- [ ] T001 Create setup-only directory scaffolding for the feature in `src/providers/` and `tests/integration/trip-requests/`, with completion confirmed when later tasks can add concrete provider and test files without creating new directories.
-- [ ] T002 [P] Create the PostgreSQL test helper scaffold in `tests/helpers/database.ts`, with completion confirmed when the file exports placeholder setup/cleanup helpers that can be imported by integration tests.
-- [ ] T003 [P] Create the trip request integration test file scaffold in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the file exists and can host the full HTTP test suite.
+- [X] T001 Create setup-only directory scaffolding for the feature in `src/providers/` and `tests/integration/trip-requests/`, with completion confirmed when later tasks can add concrete provider and test files without creating new directories.
+- [X] T002 [P] Create the PostgreSQL test helper scaffold in `tests/helpers/database.ts`, with completion confirmed when the file exports placeholder setup/cleanup helpers that can be imported by integration tests.
+- [X] T003 [P] Create the trip request integration test file scaffold in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the file exists and can host the full HTTP test suite.
 
 ---
 
