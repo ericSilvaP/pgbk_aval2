@@ -2,7 +2,7 @@ import { open, unlink } from 'node:fs/promises'
 import { setTimeout as delay } from 'node:timers/promises'
 
 import { PrismaClient } from '@prisma/client'
-import { afterEach } from 'vitest'
+import { afterEach, expect } from 'vitest'
 
 import type { TripRequest } from '../../src/repositories/trip-request-repository.js'
 
@@ -21,6 +21,32 @@ export interface PersistedTripRequestFixture {
   passengerCount: number
   status: TripRequest['status']
   createdAt: string
+}
+
+const DEFAULT_PENDING_TRIP_REQUEST_FIXTURE: PersistedTripRequestFixture = {
+  id: '11111111-1111-1111-1111-111111111111',
+  requesterName: 'Maria Silva',
+  origin: 'Fortaleza',
+  destination: 'Recife',
+  departureAt: '2026-07-10T11:00:00.000Z',
+  returnAt: '2026-07-12T21:30:00.000Z',
+  purpose: 'Institutional meeting',
+  passengerCount: 2,
+  status: 'pending',
+  createdAt: '2026-06-26T15:45:10.123Z',
+}
+
+const DEFAULT_CANCELED_TRIP_REQUEST_FIXTURE: PersistedTripRequestFixture = {
+  id: '22222222-2222-2222-2222-222222222222',
+  requesterName: 'Joao Costa',
+  origin: 'Sobral',
+  destination: 'Natal',
+  departureAt: '2026-08-03T13:00:00.000Z',
+  returnAt: '2026-08-05T18:00:00.000Z',
+  purpose: 'Technical visit',
+  passengerCount: 3,
+  status: 'canceled',
+  createdAt: '2026-06-27T09:00:00.000Z',
 }
 
 export const testPrisma = new PrismaClient({
@@ -108,11 +134,69 @@ export async function seedTripRequests(fixtures: ReadonlyArray<PersistedTripRequ
   })
 }
 
+export function createPendingTripRequestFixture(
+  overrides: Partial<PersistedTripRequestFixture> = {},
+): PersistedTripRequestFixture {
+  return {
+    ...DEFAULT_PENDING_TRIP_REQUEST_FIXTURE,
+    ...overrides,
+    status: 'pending',
+  }
+}
+
+export function createCanceledTripRequestFixture(
+  overrides: Partial<PersistedTripRequestFixture> = {},
+): PersistedTripRequestFixture {
+  return {
+    ...DEFAULT_CANCELED_TRIP_REQUEST_FIXTURE,
+    ...overrides,
+    status: 'canceled',
+  }
+}
+
+function mapPersistedTripRequestRecord(record: NonNullable<Awaited<ReturnType<typeof findTripRequestById>>>) {
+  return {
+    id: record.id,
+    requesterName: record.requesterName,
+    origin: record.origin,
+    destination: record.destination,
+    departureAt: record.departureAt.toISOString(),
+    returnAt: record.returnAt.toISOString(),
+    purpose: record.purpose,
+    passengerCount: record.passengerCount,
+    status: record.status,
+    createdAt: record.createdAt.toISOString(),
+  } satisfies PersistedTripRequestFixture
+}
+
 export async function findTripRequestById(id: string) {
   return testPrisma.tripRequest.findUnique({
     where: {
       id,
     },
+  })
+}
+
+export async function reloadPersistedTripRequest(
+  id: string,
+): Promise<PersistedTripRequestFixture | null> {
+  const tripRequest = await findTripRequestById(id)
+
+  if (tripRequest === null) {
+    return null
+  }
+
+  return mapPersistedTripRequestRecord(tripRequest)
+}
+
+export function expectOnlyTripRequestStatusChanged(
+  before: PersistedTripRequestFixture,
+  after: PersistedTripRequestFixture,
+  expectedStatus: TripRequest['status'],
+): void {
+  expect(after).toStrictEqual({
+    ...before,
+    status: expectedStatus,
   })
 }
 
