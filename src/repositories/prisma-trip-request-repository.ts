@@ -75,4 +75,17 @@ export class PrismaTripRequestRepository implements TripRequestRepository {
 
     return mapPersistedTripRequest(tripRequest)
   }
+
+  public async cancelById(id: string): Promise<TripRequest> {
+    const tripRequest = await this.prisma.tripRequest.update({
+      where: {
+        id,
+      },
+      data: {
+        status: 'canceled',
+      },
+    })
+
+    return mapPersistedTripRequest(tripRequest)
+  }
 }

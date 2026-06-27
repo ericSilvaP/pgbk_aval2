@@ -48,7 +48,7 @@ npm run init:db
 - `DATABASE_URL`: PostgreSQL connection string
 - `HOLIDAYS_API_BASE_URL`: BrasilAPI base URL used by the production `HolidaysProvider`
 
-The default `.env.example` values match `docker-compose.yml`:
+The default .env.example values match `docker-compose.yml`:
 
 - PostgreSQL host port: `5434`
 - Database name: `trip_requests_db`
@@ -64,6 +64,29 @@ The default `.env.example` values match `docker-compose.yml`:
 - `npm test`: run Vitest integration tests
 
 ## Endpoints
+
+All endpoints use standardized envelopes.
+
+Success envelope:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+Error envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "A clear and objective error message"
+  }
+}
+```
 
 ### `POST /trip-requests`
 
@@ -281,6 +304,79 @@ Unexpected repository failure response: `500 Internal Server Error`
 
 Internal stack traces and database details never appear in HTTP response bodies.
 
+### `PATCH /trip-requests/:id/cancel`
+
+Cancels one persisted trip request by identifier in the standardized success envelope.
+
+Behavior:
+
+- No request body is required.
+- Returns `200 OK` when the id exists and the trip request is still `pending`.
+- A successful cancellation changes only `status` from `pending` to `canceled`.
+- Cancellation does not delete the record.
+- `requesterName`, `origin`, `destination`, `departureAt`, `returnAt`, `purpose`, `passengerCount`, and `createdAt` remain unchanged after a successful cancellation.
+- `departureAt`, `returnAt`, and `createdAt` remain complete UTC timestamps in `YYYY-MM-DDTHH:mm:ss.sssZ` format.
+- Returns `404 Not Found` with `TRIP_REQUEST_NOT_FOUND` when no persisted trip request matches the provided id.
+- Returns `409 Conflict` with `TRIP_REQUEST_ALREADY_CANCELED` when the trip request was already canceled.
+- Returns `500 Internal Server Error` with the standardized error envelope `{ "success": false, "error": { "code": "INTERNAL_SERVER_ERROR", "message": "Internal server error" } }` for unexpected repository failures.
+- Internal stack traces, Prisma details, SQL fragments, connection details, local file paths, source file paths, and `node_modules` paths never appear in the `500` response body.
+
+Success response: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "requesterName": "Maria Silva",
+    "origin": "Fortaleza",
+    "destination": "Recife",
+    "departureAt": "2026-07-10T11:00:00.000Z",
+    "returnAt": "2026-07-12T21:30:00.000Z",
+    "purpose": "Institutional meeting",
+    "passengerCount": 2,
+    "status": "canceled",
+    "createdAt": "2026-06-26T15:45:10.123Z"
+  }
+}
+```
+
+Not-found response: `404 Not Found`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "TRIP_REQUEST_NOT_FOUND",
+    "message": "Trip request not found"
+  }
+}
+```
+
+Already-canceled response: `409 Conflict`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "TRIP_REQUEST_ALREADY_CANCELED",
+    "message": "Trip request is already canceled"
+  }
+}
+```
+
+Unexpected repository failure response: `500 Internal Server Error`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INTERNAL_SERVER_ERROR",
+    "message": "Internal server error"
+  }
+}
+```
+
 ## Testing Notes
 
 - Validation failures do not call `HolidaysProvider.getNationalHolidays()`.
@@ -288,6 +384,7 @@ Internal stack traces and database details never appear in HTTP response bodies.
 - Holiday rejections and holiday-provider failures do not call `TripRequestRepository.create()`.
 - `GET /trip-requests` tests use order-insensitive assertions for list contents because collection order is not guaranteed.
 - Retrieval failure tests assert `INTERNAL_SERVER_ERROR` without exposing internal repository details.
+- Cancellation failure tests assert the exact `Internal server error` message without exposing internal repository details.
 - Tests use injected `HolidaysProvider` fakes and never access the real BrasilAPI.
 
 ## Feature References
