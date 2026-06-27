@@ -8,6 +8,34 @@ import type {
 
 type PrismaTripRequestClient = Pick<PrismaClient, 'tripRequest'>
 
+type PersistedTripRequestRecord = {
+  id: string
+  requesterName: string
+  origin: string
+  destination: string
+  departureAt: Date
+  returnAt: Date
+  purpose: string
+  passengerCount: number
+  status: TripRequest['status']
+  createdAt: Date
+}
+
+function mapPersistedTripRequest(record: PersistedTripRequestRecord): TripRequest {
+  return {
+    id: record.id,
+    requesterName: record.requesterName,
+    origin: record.origin,
+    destination: record.destination,
+    departureAt: record.departureAt.toISOString(),
+    returnAt: record.returnAt.toISOString(),
+    purpose: record.purpose,
+    passengerCount: record.passengerCount,
+    status: record.status,
+    createdAt: record.createdAt.toISOString(),
+  }
+}
+
 export class PrismaTripRequestRepository implements TripRequestRepository {
   public constructor(private readonly prisma: PrismaTripRequestClient) {}
 
@@ -25,17 +53,26 @@ export class PrismaTripRequestRepository implements TripRequestRepository {
       },
     })
 
-    return {
-      id: tripRequest.id,
-      requesterName: tripRequest.requesterName,
-      origin: tripRequest.origin,
-      destination: tripRequest.destination,
-      departureAt: tripRequest.departureAt.toISOString(),
-      returnAt: tripRequest.returnAt.toISOString(),
-      purpose: tripRequest.purpose,
-      passengerCount: tripRequest.passengerCount,
-      status: tripRequest.status,
-      createdAt: tripRequest.createdAt.toISOString(),
+    return mapPersistedTripRequest(tripRequest)
+  }
+
+  public async findAll(): Promise<TripRequest[]> {
+    const tripRequests = await this.prisma.tripRequest.findMany()
+
+    return tripRequests.map(mapPersistedTripRequest)
+  }
+
+  public async findById(id: string): Promise<TripRequest | null> {
+    const tripRequest = await this.prisma.tripRequest.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (tripRequest === null) {
+      return null
     }
+
+    return mapPersistedTripRequest(tripRequest)
   }
 }

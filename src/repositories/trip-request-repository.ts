@@ -26,4 +26,6 @@ export interface TripRequest {
 
 export interface TripRequestRepository {
   create(input: CreateTripRequestRecord): Promise<TripRequest>
+  findAll(): Promise<TripRequest[]>
+  findById(id: string): Promise<TripRequest | null>
 }

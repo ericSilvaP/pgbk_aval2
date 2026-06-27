@@ -12,8 +12,8 @@
 
 **Purpose**: Extend the existing repository abstraction and Prisma implementation without changing `POST /trip-requests` behavior.
 
-- [ ] T001 Extend `src/repositories/trip-request-repository.ts` with `findAll(): Promise<TripRequest[]>` and `findById(id: string): Promise<TripRequest | null>`; complete when the contract exports both read methods and remains backward-compatible with `create()`; blocks T002-T014.
-- [ ] T002 Implement `findAll()` and `findById()` in `src/repositories/prisma-trip-request-repository.ts` using Prisma reads plus `toISOString()` normalization; complete when list and single-record reads return canonical trip-request fields with `departureAt`, `returnAt`, and `createdAt` ending in `Z`, and `create()` behavior stays unchanged; depends on T001.
+- [X] T001 Extend `src/repositories/trip-request-repository.ts` with `findAll(): Promise<TripRequest[]>` and `findById(id: string): Promise<TripRequest | null>`; complete when the contract exports both read methods and remains backward-compatible with `create()`; blocks T002-T014.
+- [X] T002 Implement `findAll()` and `findById()` in `src/repositories/prisma-trip-request-repository.ts` using Prisma reads plus `toISOString()` normalization; complete when list and single-record reads return canonical trip-request fields with `departureAt`, `returnAt`, and `createdAt` ending in `Z`, and `create()` behavior stays unchanged; depends on T001.
 
 ---
 
