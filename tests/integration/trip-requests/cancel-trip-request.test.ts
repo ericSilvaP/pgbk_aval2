@@ -255,9 +255,15 @@ describe('PATCH /trip-requests/:id/cancel', () => {
     expect(findById).toHaveBeenCalledWith(pendingTripRequest.id)
     expect(cancelById).toHaveBeenCalledTimes(1)
     expect(cancelById).toHaveBeenCalledWith(pendingTripRequest.id)
-    expect(findById.mock.invocationCallOrder[0]).toBeLessThan(
-      cancelById.mock.invocationCallOrder[0],
-    )
+
+    const [findByIdInvocationOrder] = findById.mock.invocationCallOrder
+    const [cancelByIdInvocationOrder] = cancelById.mock.invocationCallOrder
+
+    if (findByIdInvocationOrder === undefined || cancelByIdInvocationOrder === undefined) {
+      throw new Error('expected invocation call order to be recorded for both repository methods')
+    }
+
+    expect(findByIdInvocationOrder).toBeLessThan(cancelByIdInvocationOrder)
     expect(holidaysProviderCalls).toHaveLength(0)
   })
 })

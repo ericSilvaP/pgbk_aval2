@@ -1,21 +1,25 @@
-import type { CancelTripRequestHandler } from '../controllers/cancel-trip-request-controller.js'
 import {
   AppError,
   createTripRequestAlreadyCanceledError,
   createTripRequestNotFoundError,
 } from '../errors/app-error.js'
-import type { TripRequestRepository } from '../repositories/trip-request-repository.js'
+import type {
+  TripRequest,
+  TripRequestRepository,
+} from '../repositories/trip-request-repository.js'
 
 export interface CancelTripRequestServiceDependencies {
   tripRequestRepository: TripRequestRepository
 }
 
+export type CancelTripRequestService = (id: string) => Promise<TripRequest>
+
 export function createCancelTripRequestService(
   dependencies: CancelTripRequestServiceDependencies,
-): CancelTripRequestHandler {
+): CancelTripRequestService {
   const { tripRequestRepository } = dependencies
 
-  return async (id) => {
+  return async (id): Promise<TripRequest> => {
     try {
       const tripRequest = await tripRequestRepository.findById(id)
 
@@ -27,14 +31,16 @@ export function createCancelTripRequestService(
         throw createTripRequestAlreadyCanceledError()
       }
 
-      return await tripRequestRepository.cancelById(id)
-    } catch (error) {
+      const canceledTripRequest = await tripRequestRepository.cancelById(id)
+
+      return canceledTripRequest
+    } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error
       }
 
       throw new AppError('INTERNAL_SERVER_ERROR', 'Internal server error', {
-        cause: error,
+        cause: error instanceof Error ? error : new Error(String(error)),
       })
     }
   }

@@ -120,6 +120,15 @@ function createValidationApp() {
       repositoryCreateCalls.push(input)
       throw new Error('repository create should not be called')
     },
+    async findAll(): Promise<TripRequest[]> {
+      throw new Error('findAll should not be called during validation')
+    },
+    async findById(): Promise<TripRequest | null> {
+      throw new Error('findById should not be called during validation')
+    },
+    async cancelById(): Promise<TripRequest> {
+      throw new Error('cancelById should not be called during validation')
+    },
   }
 
   return {
@@ -406,6 +415,15 @@ describe('POST /trip-requests', () => {
         repositoryCreateCalls += 1
         throw new Error('repository create should not be called')
       },
+      async findAll(): Promise<TripRequest[]> {
+        throw new Error('findAll should not be called during holiday validation')
+      },
+      async findById(): Promise<TripRequest | null> {
+        throw new Error('findById should not be called during holiday validation')
+      },
+      async cancelById(): Promise<TripRequest> {
+        throw new Error('cancelById should not be called during holiday validation')
+      },
     }
     const app = createApp({
       tripRequestRepository,
@@ -445,6 +463,15 @@ describe('POST /trip-requests', () => {
         repositoryCreateCalls += 1
         throw new Error('repository create should not be called')
       },
+      async findAll(): Promise<TripRequest[]> {
+        throw new Error('findAll should not be called during provider failure handling')
+      },
+      async findById(): Promise<TripRequest | null> {
+        throw new Error('findById should not be called during provider failure handling')
+      },
+      async cancelById(): Promise<TripRequest> {
+        throw new Error('cancelById should not be called during provider failure handling')
+      },
     }
     const app = createApp({
       tripRequestRepository,
@@ -481,6 +508,15 @@ describe('POST /trip-requests', () => {
       async create(_input: CreateTripRequestRecord): Promise<TripRequest> {
         repositoryCreateCalls += 1
         throw new Error('database exploded')
+      },
+      async findAll(): Promise<TripRequest[]> {
+        throw new Error('findAll should not be called during trip creation failure handling')
+      },
+      async findById(): Promise<TripRequest | null> {
+        throw new Error('findById should not be called during trip creation failure handling')
+      },
+      async cancelById(): Promise<TripRequest> {
+        throw new Error('cancelById should not be called during trip creation failure handling')
       },
     }
     const app = createApp({
