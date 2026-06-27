@@ -129,11 +129,11 @@
 
 **Purpose**: Finalize documentation, contracts, and verification for the complete release-ready flow
 
-- [ ] T038 [P] Update the `POST /trip-requests` HTTP contract examples and error responses in `specs/001-trip-request-creation/contracts/post-trip-requests.openapi.yaml`, with completion confirmed when the contract documents success, validation, holiday, provider-failure, and repository-failure responses consistently with the implementation plan.
-- [ ] T039 [P] Update the end-to-end validation guide in `specs/001-trip-request-creation/quickstart.md`, with completion confirmed when the guide documents success, manual validation, holiday rejection, provider failure, and repository failure scenarios.
-- [ ] T040 [P] Update the setup, environment, and endpoint documentation in `README.md`, with completion confirmed when the README documents the complete `POST /trip-requests` flow, required environment variables, and test isolation expectations.
-- [ ] T041 Verify holiday-provider configuration and database bootstrap documentation in `.env.example` and `docker-compose.yml`, with completion confirmed when the documented defaults still support the described local setup for the complete feature.
-- [ ] T042 Run and document the final quality-gate validation across `npm run build`, `npm test`, and `npm run lint` in `specs/001-trip-request-creation/quickstart.md`, with completion confirmed when the quickstart records the final verification commands for the release-ready flow.
+- [X] T038 [P] Update the `POST /trip-requests` HTTP contract examples and error responses in `specs/001-trip-request-creation/contracts/post-trip-requests.openapi.yaml`, with completion confirmed when the contract documents success, validation, holiday, provider-failure, and repository-failure responses consistently with the implementation plan.
+- [X] T039 [P] Update the end-to-end validation guide in `specs/001-trip-request-creation/quickstart.md`, with completion confirmed when the guide documents success, manual validation, holiday rejection, provider failure, and repository failure scenarios.
+- [X] T040 [P] Update the setup, environment, and endpoint documentation in `README.md`, with completion confirmed when the README documents the complete `POST /trip-requests` flow, required environment variables, and test isolation expectations.
+- [X] T041 Verify holiday-provider configuration and database bootstrap documentation in `.env.example` and `docker-compose.yml`, with completion confirmed when the documented defaults still support the described local setup for the complete feature.
+- [X] T042 Run and document the final quality-gate validation across `npm run build`, `npm test`, and `npm run lint` in `specs/001-trip-request-creation/quickstart.md`, with completion confirmed when the quickstart records the final verification commands for the release-ready flow.
 
 ---
 

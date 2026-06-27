@@ -1,5 +1,5 @@
 import request from 'supertest'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 
 import { createApp } from '../../../src/app.js'
@@ -474,6 +474,7 @@ describe('POST /trip-requests', () => {
   })
 
   it('returns the standardized 500 envelope when the repository throws', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     let repositoryCreateCalls = 0
     const { holidaysProvider } = createHolidaysProviderDouble()
     const tripRequestRepository: TripRequestRepository = {
@@ -500,6 +501,7 @@ describe('POST /trip-requests', () => {
     })
     expect(JSON.stringify(responseBody)).not.toContain('database exploded')
     expect(repositoryCreateCalls).toBe(1)
+    expect(consoleErrorSpy).toHaveBeenCalledOnce()
     expect(await countTripRequests()).toBe(0)
   })
 })

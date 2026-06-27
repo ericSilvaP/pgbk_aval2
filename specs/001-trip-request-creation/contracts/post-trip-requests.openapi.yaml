@@ -8,6 +8,11 @@ paths:
     post:
       summary: Create an institutional trip request
       operationId: createTripRequest
+      description: >-
+        Validates the request locally, normalizes dates to UTC, checks the
+        departure civil date against national holidays, persists approved
+        requests with status `pending`, and always responds with the standardized
+        success or error envelope.
       requestBody:
         required: true
         content:
@@ -36,6 +41,16 @@ paths:
                   purpose: Institutional meeting
                   passengerCount: 2
                   status: pending
+              invalidDatePayload:
+                summary: Invalid payload with malformed departureAt
+                value:
+                  requesterName: Maria Silva
+                  origin: Fortaleza
+                  destination: Recife
+                  departureAt: not-a-date
+                  returnAt: 2026-07-12T18:30:00-03:00
+                  purpose: Institutional meeting
+                  passengerCount: 2
       responses:
         '201':
           description: Trip request created successfully
@@ -59,7 +74,9 @@ paths:
                       status: pending
                       createdAt: 2026-06-26T15:45:10.123Z
         '400':
-          description: Validation failure for malformed input, reserved fields, invalid date ordering, or invalid passenger count
+          description: >-
+            Validation failure for malformed input, reserved fields, invalid
+            date values, invalid date ordering, or invalid passenger count.
           content:
             application/json:
               schema:
@@ -77,6 +94,18 @@ paths:
                     error:
                       code: VALIDATION_ERROR
                       message: returnAt must be equal to or later than departureAt
+                invalidDateTime:
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: departureAt must be a valid date-time
+                invalidPassengerCount:
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: passengerCount must be greater than zero
         '409':
           description: Departure date falls on a national holiday
           content:
@@ -145,7 +174,9 @@ components:
           type: string
         passengerCount:
           type: integer
-      description: Client payload for trip request creation. `id`, `status`, and `createdAt` are forbidden because they are server-managed.
+      description: >-
+        Client payload for trip request creation. `id`, `status`, and
+        `createdAt` are forbidden because they are server-managed.
     TripRequest:
       type: object
       required:
