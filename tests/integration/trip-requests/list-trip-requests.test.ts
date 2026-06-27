@@ -169,6 +169,9 @@ describe('GET /trip-requests', () => {
       async findById() {
         throw new Error('findById should not be called during list retrieval')
       },
+      async cancelById(): Promise<TripRequest> {
+        throw new Error('cancelById should not be called during list retrieval')
+      },
     }
     const { app, holidaysProviderCalls } = createListTripRequestsApp(tripRequestRepository)
 

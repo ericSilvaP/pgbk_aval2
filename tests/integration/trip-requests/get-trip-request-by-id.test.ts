@@ -162,6 +162,9 @@ describe('GET /trip-requests/:id', () => {
       async findById() {
         throw new Error('database connection lost')
       },
+      async cancelById(): Promise<TripRequest> {
+        throw new Error('cancelById should not be called during get-by-id retrieval')
+      },
     }
     const { app, holidaysProviderCalls } = createGetTripRequestByIdApp(tripRequestRepository)
 
