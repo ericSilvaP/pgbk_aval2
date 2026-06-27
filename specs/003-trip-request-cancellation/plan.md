@@ -6,7 +6,7 @@
 
 ## Summary
 
-Implement `PATCH /trip-requests/:id/cancel` on top of the existing Express, Prisma, and PostgreSQL architecture from Specs 001 and 002. The work extends `TripRequestRepository` and `PrismaTripRequestRepository` with cancellation persistence, adds a dedicated cancellation service and controller, registers the cancel endpoint in the existing trip request router, reuses the centralized error handler plus the standardized success and error envelopes, and verifies success, already-canceled, not-found, persistence, UTC-date, and unexpected-repository-failure behavior with Vitest integration tests backed by PostgreSQL.
+Implement `PATCH /trip-requests/:id/cancel` on top of the existing Express, Prisma, and PostgreSQL architecture from Specs 001 and 002. The work extends `TripRequestRepository` and `PrismaTripRequestRepository` with cancellation persistence, adds a dedicated cancellation service and controller, registers the cancel endpoint in the existing trip request router, reuses the centralized error handler plus the standardized success and error envelopes, and verifies success, already-canceled, not-found, persistence, exact UTC timestamp formatting, and unexpected-repository-failure behavior with the exact `INTERNAL_SERVER_ERROR` / `Internal server error` envelope using Vitest integration tests backed by PostgreSQL.
 
 ## Technical Context
 
@@ -24,7 +24,7 @@ Implement `PATCH /trip-requests/:id/cancel` on top of the existing Express, Pris
 
 **Performance Goals**: Deterministic cancellation with one repository lookup to classify the request state, one repository write to persist the status transition, zero holiday-provider calls during cancellation, and consistent UTC serialization for every returned date field
 
-**Constraints**: Preserve the existing `POST /trip-requests`, `GET /trip-requests`, and `GET /trip-requests/:id` flows unchanged; add only `PATCH /trip-requests/:id/cancel`; keep standardized success and error envelopes plus centralized error handling; ensure a successful cancellation updates only `status` from `pending` to `canceled`; keep `requesterName`, `origin`, `destination`, `departureAt`, `returnAt`, `purpose`, `passengerCount`, and `createdAt` unchanged; do not delete records; return `TRIP_REQUEST_NOT_FOUND` with HTTP `404` for missing identifiers; return `TRIP_REQUEST_ALREADY_CANCELED` with HTTP `409` for repeated cancellation attempts; return `INTERNAL_SERVER_ERROR` without leaking internal details for unexpected repository failures; add no schema migration, authentication, authorization, approval flow, vehicle allocation, driver allocation, holiday endpoint work, or frontend behavior
+**Constraints**: Preserve the existing `POST /trip-requests`, `GET /trip-requests`, and `GET /trip-requests/:id` flows unchanged; add only `PATCH /trip-requests/:id/cancel`; keep standardized success and error envelopes plus centralized error handling; ensure a successful cancellation updates only `status` from `pending` to `canceled`; keep `requesterName`, `origin`, `destination`, `departureAt`, `returnAt`, `purpose`, `passengerCount`, and `createdAt` unchanged; do not delete records; return `TRIP_REQUEST_NOT_FOUND` with HTTP `404` for missing identifiers; return `TRIP_REQUEST_ALREADY_CANCELED` with HTTP `409` for repeated cancellation attempts; return `{ "success": false, "error": { "code": "INTERNAL_SERVER_ERROR", "message": "Internal server error" } }` without leaking internal details for unexpected repository failures; add no schema migration, authentication, authorization, approval flow, vehicle allocation, driver allocation, holiday endpoint work, or frontend behavior
 
 **Scale/Scope**: Cancellation of persisted `trip-requests` records only, including endpoint wiring, repository persistence, and integration coverage
 
@@ -43,7 +43,7 @@ Implement `PATCH /trip-requests/:id/cancel` on top of the existing Express, Pris
 - [x] Database access remains isolated behind `TripRequestRepository` and the Prisma-backed implementation.
 - [x] The existing Express app factory remains the composition root for production and integration tests.
 - [x] Vitest coverage is planned for successful cancellation, persistence of the status change, missing id, already canceled, UTC date formatting, and unexpected repository failures.
-- [x] README changes are not required unless implementation reveals missing setup or endpoint documentation.
+- [x] README endpoint documentation is required for this feature and must cover `PATCH /trip-requests/:id/cancel`, its success response, `TRIP_REQUEST_NOT_FOUND`, `TRIP_REQUEST_ALREADY_CANCELED`, `INTERNAL_SERVER_ERROR`, relevant HTTP status codes, and the standardized success and error envelopes.
 - [x] Technical identifiers, files, scripts, tests, and documentation remain in English.
 
 **Gate Result (pre-design)**: Pass. The requested work adds only the mandatory cancellation behavior on top of the current backend architecture.

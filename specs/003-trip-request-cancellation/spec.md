@@ -24,7 +24,7 @@ An API consumer cancels an existing pending institutional trip request and recei
 2. **Given** a persisted trip request exists with status `pending`, **When** the cancellation succeeds, **Then** the returned trip request has `status` set to `canceled`.
 3. **Given** a persisted trip request exists with status `pending`, **When** the cancellation succeeds, **Then** the trip request remains stored and is not deleted from the system.
 4. **Given** a persisted trip request exists with status `pending`, **When** the cancellation succeeds, **Then** `requesterName`, `origin`, `destination`, `departureAt`, `returnAt`, `purpose`, `passengerCount`, and `createdAt` remain unchanged.
-5. **Given** a trip request is returned after cancellation, **When** its date fields are inspected, **Then** `departureAt`, `returnAt`, and `createdAt` are complete ISO 8601 UTC timestamps ending with `Z`.
+5. **Given** a trip request is returned after cancellation, **When** its date fields are inspected, **Then** `departureAt`, `returnAt`, and `createdAt` are complete ISO 8601 UTC timestamps in the full `YYYY-MM-DDTHH:mm:ss.sssZ` shape.
 
 ---
 
@@ -63,7 +63,7 @@ An API consumer receives a standardized internal error response when an unexpect
 - A cancellation request targets an identifier that does not match any persisted trip request; the system returns `TRIP_REQUEST_NOT_FOUND` with HTTP `404 Not Found`.
 - A cancellation request targets a trip request whose status is already `canceled`; the system returns `TRIP_REQUEST_ALREADY_CANCELED` with HTTP `409 Conflict` and leaves the record unchanged.
 - A successfully canceled trip request must remain present in the persisted dataset, with only its `status` changed from `pending` to `canceled`.
-- A trip request stored with timezone-aware date values must still return `departureAt`, `returnAt`, and `createdAt` as complete ISO 8601 UTC timestamps ending with `Z` after cancellation.
+- A trip request stored with timezone-aware date values must still return `departureAt`, `returnAt`, and `createdAt` as complete ISO 8601 UTC timestamps in the full `YYYY-MM-DDTHH:mm:ss.sssZ` shape after cancellation.
 - An unexpected failure occurs after locating the trip request but before the cancellation result can be completed; the system returns `INTERNAL_SERVER_ERROR` without exposing internal persistence details.
 
 ## Requirements *(mandatory)*
@@ -88,7 +88,7 @@ An API consumer receives a standardized internal error response when an unexpect
 - **FR-006**: A successful cancellation response MUST include `id`, `requesterName`, `origin`, `destination`, `departureAt`, `returnAt`, `purpose`, `passengerCount`, `status`, and `createdAt`.
 - **FR-007**: A successful cancellation MUST NOT delete the trip request from the persisted dataset.
 - **FR-008**: A successful cancellation MUST NOT change `requesterName`, `origin`, `destination`, `departureAt`, `returnAt`, `purpose`, `passengerCount`, or `createdAt`.
-- **FR-009**: A successful cancellation response MUST return `departureAt`, `returnAt`, and `createdAt` as complete ISO 8601 UTC timestamps ending with `Z`.
+- **FR-009**: A successful cancellation response MUST return `departureAt`, `returnAt`, and `createdAt` as complete ISO 8601 UTC timestamps in the full `YYYY-MM-DDTHH:mm:ss.sssZ` shape.
 - **FR-010**: When no persisted trip request matches the provided identifier, the system MUST return HTTP `404 Not Found`.
 - **FR-011**: A missing trip request response MUST use the standard error envelope with error code `TRIP_REQUEST_NOT_FOUND` and message `Trip request not found`.
 - **FR-012**: When the targeted trip request already has status `canceled`, the system MUST reject the cancellation attempt.
@@ -96,7 +96,7 @@ An API consumer receives a standardized internal error response when an unexpect
 - **FR-014**: An already canceled trip request response MUST use the standard error envelope with error code `TRIP_REQUEST_ALREADY_CANCELED` and message `Trip request is already canceled`.
 - **FR-015**: A rejected repeated cancellation MUST leave the trip request unchanged.
 - **FR-016**: Unexpected cancellation failures MUST return HTTP `500 Internal Server Error`.
-- **FR-017**: Unexpected cancellation failures MUST use the standard error envelope with error code `INTERNAL_SERVER_ERROR`.
+- **FR-017**: Unexpected cancellation failures MUST use the standard error envelope with error code `INTERNAL_SERVER_ERROR` and message `Internal server error`.
 - **FR-018**: Unexpected cancellation failures MUST NOT expose stack traces, internal database messages, SQL statements, connection details, local file paths, or similar internal details.
 
 ### Key Entities *(include if feature involves data)*
@@ -112,7 +112,7 @@ An API consumer receives a standardized internal error response when an unexpect
 - **SC-002**: 100% of successful cancellations change only `status` from `pending` to `canceled` and leave all other canonical trip request fields unchanged.
 - **SC-003**: 100% of cancellation requests for missing identifiers return HTTP `404 Not Found` with error code `TRIP_REQUEST_NOT_FOUND`.
 - **SC-004**: 100% of repeated cancellation attempts against already canceled trip requests return HTTP `409 Conflict` with error code `TRIP_REQUEST_ALREADY_CANCELED`.
-- **SC-005**: 100% of cancellation responses return `departureAt`, `returnAt`, and `createdAt` as complete ISO 8601 UTC timestamps ending with `Z`.
+- **SC-005**: 100% of cancellation responses return `departureAt`, `returnAt`, and `createdAt` as complete ISO 8601 UTC timestamps in the full `YYYY-MM-DDTHH:mm:ss.sssZ` shape.
 - **SC-006**: 100% of unexpected cancellation failures return `INTERNAL_SERVER_ERROR` in the standard error envelope without exposing internal persistence details.
 
 ## Assumptions
