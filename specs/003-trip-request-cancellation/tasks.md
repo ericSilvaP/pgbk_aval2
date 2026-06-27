@@ -18,8 +18,8 @@
 
 **Purpose**: Extend the existing repository abstraction and Prisma implementation without changing `POST /trip-requests`, `GET /trip-requests`, or `GET /trip-requests/:id`.
 
-- [ ] T001 Extend `src/repositories/trip-request-repository.ts` with `cancelById(id: string): Promise<TripRequest>`; complete when the interface exposes `create()`, `findAll()`, `findById()`, and `cancelById()` with the existing read/create signatures unchanged; blocks T002-T015.
-- [ ] T002 Implement `cancelById()` in `src/repositories/prisma-trip-request-repository.ts` by reusing the existing persisted-record mapper and updating only `status`; complete when the method persists `status: "canceled"`, leaves all other columns untouched, returns `departureAt`, `returnAt`, and `createdAt` in the full `YYYY-MM-DDTHH:mm:ss.sssZ` shape matching `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$`, does not delete the row, and keeps `create()`, `findAll()`, and `findById()` behavior unchanged; depends on T001.
+- [X] T001 Extend `src/repositories/trip-request-repository.ts` with `cancelById(id: string): Promise<TripRequest>`; complete when the interface exposes `create()`, `findAll()`, `findById()`, and `cancelById()` with the existing read/create signatures unchanged; blocks T002-T015.
+- [X] T002 Implement `cancelById()` in `src/repositories/prisma-trip-request-repository.ts` by reusing the existing persisted-record mapper and updating only `status`; complete when the method persists `status: "canceled"`, leaves all other columns untouched, returns `departureAt`, `returnAt`, and `createdAt` in the full `YYYY-MM-DDTHH:mm:ss.sssZ` shape matching `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$`, does not delete the row, and keeps `create()`, `findAll()`, and `findById()` behavior unchanged; depends on T001.
 
 ---
 

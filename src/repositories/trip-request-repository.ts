@@ -28,4 +28,5 @@ export interface TripRequestRepository {
   create(input: CreateTripRequestRecord): Promise<TripRequest>
   findAll(): Promise<TripRequest[]>
   findById(id: string): Promise<TripRequest | null>
+  cancelById(id: string): Promise<TripRequest>
 }
