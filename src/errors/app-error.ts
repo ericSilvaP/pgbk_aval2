@@ -1,5 +1,6 @@
 const APP_ERROR_STATUS_CODES = {
   VALIDATION_ERROR: 400,
+  TRIP_REQUEST_NOT_FOUND: 404,
   HOLIDAY_TRIP_NOT_ALLOWED: 409,
   HOLIDAYS_API_UNAVAILABLE: 502,
   INTERNAL_SERVER_ERROR: 500,
@@ -21,6 +22,10 @@ export class AppError extends Error {
 
 export function createValidationError(message: string, options?: ErrorOptions): AppError {
   return new AppError('VALIDATION_ERROR', message, options)
+}
+
+export function createTripRequestNotFoundError(options?: ErrorOptions): AppError {
+  return new AppError('TRIP_REQUEST_NOT_FOUND', 'Trip request not found', options)
 }
 
 export function createHolidayTripNotAllowedError(

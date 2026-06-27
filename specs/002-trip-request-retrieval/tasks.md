@@ -47,15 +47,15 @@
 
 ### Tests for User Story 2 (MANDATORY) ⚠️
 
-- [ ] T009 [P] [US2] Create `tests/integration/trip-requests/get-trip-request-by-id.test.ts` covering existing-record success, missing-id `404` with `TRIP_REQUEST_NOT_FOUND`, UTC `Z` date serialization, and a repository-failure response with `INTERNAL_SERVER_ERROR` and no leaked internal detail; complete when the new tests fail before implementation and use PostgreSQL fixtures for success paths; depends on T002 and T004.
+- [X] T009 [P] [US2] Create `tests/integration/trip-requests/get-trip-request-by-id.test.ts` covering existing-record success, missing-id `404` with `TRIP_REQUEST_NOT_FOUND`, UTC `Z` date serialization, and a repository-failure response with `INTERNAL_SERVER_ERROR` and no leaked internal detail; complete when the new tests fail before implementation and use PostgreSQL fixtures for success paths; depends on T002 and T004.
 
 ### Implementation for User Story 2
 
-- [ ] T010 [US2] Add `TRIP_REQUEST_NOT_FOUND` and a `createTripRequestNotFoundError()` helper to `src/errors/app-error.ts`; complete when missing trip requests map to HTTP `404` with message `Trip request not found`; depends on T002.
-- [ ] T011 [US2] Implement `src/services/get-trip-request-by-id-service.ts` to call `tripRequestRepository.findById(id)` and throw the new not-found error when the result is `null`; complete when successful lookups return repository records unchanged for mapper reuse and missing ids never expose persistence details; depends on T002 and T010.
-- [ ] T012 [US2] Implement `src/controllers/get-trip-request-by-id-controller.ts` to read `request.params.id`, call the get-by-id service, and send the standardized success envelope through the existing mapper; complete when the controller returns HTTP `200` for found records and delegates `404` and `500` formatting to `errorHandler`; depends on T011.
-- [ ] T013 [US2] Register `GET /trip-requests/:id` in `src/routes/trip-request.routes.ts`; complete when the router exposes only `POST /trip-requests`, `GET /trip-requests`, and `GET /trip-requests/:id` for this feature scope; depends on T007 and T012.
-- [ ] T014 [US2] Wire the get-by-id retrieval service and controller into `src/app.ts`; complete when `createApp()` composes both retrieval handlers without changing existing creation dependencies or holiday-provider behavior; depends on T008 and T013.
+- [X] T010 [US2] Add `TRIP_REQUEST_NOT_FOUND` and a `createTripRequestNotFoundError()` helper to `src/errors/app-error.ts`; complete when missing trip requests map to HTTP `404` with message `Trip request not found`; depends on T002.
+- [X] T011 [US2] Implement `src/services/get-trip-request-by-id-service.ts` to call `tripRequestRepository.findById(id)` and throw the new not-found error when the result is `null`; complete when successful lookups return repository records unchanged for mapper reuse and missing ids never expose persistence details; depends on T002 and T010.
+- [X] T012 [US2] Implement `src/controllers/get-trip-request-by-id-controller.ts` to read `request.params.id`, call the get-by-id service, and send the standardized success envelope through the existing mapper; complete when the controller returns HTTP `200` for found records and delegates `404` and `500` formatting to `errorHandler`; depends on T011.
+- [X] T013 [US2] Register `GET /trip-requests/:id` in `src/routes/trip-request.routes.ts`; complete when the router exposes only `POST /trip-requests`, `GET /trip-requests`, and `GET /trip-requests/:id` for this feature scope; depends on T007 and T012.
+- [X] T014 [US2] Wire the get-by-id retrieval service and controller into `src/app.ts`; complete when `createApp()` composes both retrieval handlers without changing existing creation dependencies or holiday-provider behavior; depends on T008 and T013.
 
 **Checkpoint**: `GET /trip-requests/:id` is fully functional and independently testable.
 
