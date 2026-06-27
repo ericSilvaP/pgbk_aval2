@@ -11,9 +11,15 @@ paths:
       description: >-
         Changes the target trip request status from pending to canceled and
         returns the updated trip request in the standard success envelope.
-        Repeated cancellation attempts are rejected with a standardized
-        conflict error, and missing identifiers return the standardized
-        not-found error.
+        Successful cancellation changes only the `status` field, does
+        not delete the persisted record, and keeps `requesterName`,
+        `origin`, `destination`, `departureAt`,
+        `returnAt`, `purpose`, `passengerCount`, and
+        `createdAt` unchanged. Repeated cancellation attempts are
+        rejected with a standardized conflict error, missing identifiers
+        return the standardized not-found error, and unexpected failures
+        return the standardized internal-server-error envelope without
+        leaking internal details.
       parameters:
         - name: id
           in: path
@@ -23,7 +29,10 @@ paths:
           description: Persisted trip request identifier.
       responses:
         '200':
-          description: Trip request canceled successfully
+          description: >-
+            Trip request canceled successfully. Only `status` changes to
+            `canceled`; the record remains persisted and every other
+            canonical field remains unchanged.
           content:
             application/json:
               schema:
@@ -44,7 +53,10 @@ paths:
                       status: canceled
                       createdAt: 2026-06-26T15:45:10.123Z
         '404':
-          description: No persisted trip request matches the provided identifier
+          description: >-
+            No persisted trip request matches the provided identifier. The
+            standardized error envelope is returned with code
+            `TRIP_REQUEST_NOT_FOUND`.
           content:
             application/json:
               schema:
@@ -57,7 +69,10 @@ paths:
                       code: TRIP_REQUEST_NOT_FOUND
                       message: Trip request not found
         '409':
-          description: The persisted trip request is already canceled
+          description: >-
+            The persisted trip request is already canceled. The standardized
+            error envelope is returned with code
+            `TRIP_REQUEST_ALREADY_CANCELED`.
           content:
             application/json:
               schema:
@@ -70,7 +85,13 @@ paths:
                       code: TRIP_REQUEST_ALREADY_CANCELED
                       message: Trip request is already canceled
         '500':
-          description: Unexpected repository failure handled centrally
+          description: >-
+            Unexpected repository failure handled centrally. The standardized
+            error envelope is returned with code
+            `INTERNAL_SERVER_ERROR`, message `Internal server error`,
+            and no leaked stack traces, Prisma details, SQL fragments,
+            connection details, local file paths, source file paths, or
+            `node_modules` paths.
           content:
             application/json:
               schema:
@@ -86,6 +107,10 @@ components:
   schemas:
     TripRequest:
       type: object
+      description: >-
+        Canonical persisted trip request. In the cancellation flow, only
+        `status` changes from `pending` to `canceled`; the
+        record is not deleted and all other fields remain unchanged.
       required:
         - id
         - requesterName
@@ -109,9 +134,13 @@ components:
         departureAt:
           type: string
           format: date-time
+          pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$'
+          description: Full UTC timestamp in `YYYY-MM-DDTHH:mm:ss.sssZ` format.
         returnAt:
           type: string
           format: date-time
+          pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$'
+          description: Full UTC timestamp in `YYYY-MM-DDTHH:mm:ss.sssZ` format.
         purpose:
           type: string
         passengerCount:
@@ -119,11 +148,17 @@ components:
         status:
           type: string
           enum: [pending, canceled]
+          description: >-
+            Cancellation changes only this field from `pending` to
+            `canceled`.
         createdAt:
           type: string
           format: date-time
+          pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$'
+          description: Full UTC timestamp in `YYYY-MM-DDTHH:mm:ss.sssZ` format.
     TripRequestSuccessEnvelope:
       type: object
+      description: Standardized success envelope used by the cancel endpoint.
       required:
         - success
         - data
@@ -135,6 +170,7 @@ components:
           $ref: '#/components/schemas/TripRequest'
     ErrorEnvelope:
       type: object
+      description: Standardized error envelope used by the cancel endpoint.
       required:
         - success
         - error
