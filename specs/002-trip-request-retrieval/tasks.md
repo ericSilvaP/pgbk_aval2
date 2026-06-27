@@ -25,15 +25,15 @@
 
 ### Tests for User Story 1 (MANDATORY) ⚠️
 
-- [ ] T003 [P] [US1] Create `tests/integration/trip-requests/list-trip-requests.test.ts` covering the empty list case, the persisted-records case, UTC `Z` date serialization, order-insensitive list-content assertions, and a repository-failure response with `INTERNAL_SERVER_ERROR` and no leaked internal detail; complete when the new tests fail before implementation, exercise PostgreSQL for success paths, and avoid relying on response ordering; depends on T002.
-- [ ] T004 [P] [US1] Extend `tests/helpers/database.ts` with deterministic trip-request fixture helpers for list retrieval setup and cleanup; complete when the helper can seed list scenarios for `tests/integration/trip-requests/list-trip-requests.test.ts` without bypassing PostgreSQL; depends on T002.
+- [X] T003 [P] [US1] Create `tests/integration/trip-requests/list-trip-requests.test.ts` covering the empty list case, the persisted-records case, UTC `Z` date serialization, order-insensitive list-content assertions, and a repository-failure response with `INTERNAL_SERVER_ERROR` and no leaked internal detail; complete when the new tests fail before implementation, exercise PostgreSQL for success paths, and avoid relying on response ordering; depends on T002.
+- [X] T004 [P] [US1] Extend `tests/helpers/database.ts` with deterministic trip-request fixture helpers for list retrieval setup and cleanup; complete when the helper can seed list scenarios for `tests/integration/trip-requests/list-trip-requests.test.ts` without bypassing PostgreSQL; depends on T002.
 
 ### Implementation for User Story 1
 
-- [ ] T005 [US1] Implement `src/services/list-trip-requests-service.ts` to return `tripRequestRepository.findAll()` results for controller serialization reuse; complete when the service performs no holiday-provider calls, does not add sorting, filtering, or pagination, and lets unexpected repository failures reach centralized error handling; depends on T002.
-- [ ] T006 [US1] Implement `src/controllers/list-trip-requests-controller.ts` to call the list service and respond through `sendSuccessResponse()` plus `mapTripRequestToResponse()`; complete when the handler returns HTTP `200` with `{ "success": true, "data": TripRequestResponse[] }`; depends on T005.
-- [ ] T007 [US1] Register `GET /trip-requests` in `src/routes/trip-request.routes.ts`; complete when the router exposes the existing `POST /trip-requests` route plus the new collection `GET /trip-requests` route and adds no pagination, filtering, or sorting behavior; depends on T006.
-- [ ] T008 [US1] Wire the list retrieval service and controller into `src/app.ts`; complete when `createApp()` composes `listTripRequests` alongside the existing create flow without changing `POST /trip-requests` behavior; depends on T006 and T007.
+- [X] T005 [US1] Implement `src/services/list-trip-requests-service.ts` to return `tripRequestRepository.findAll()` results for controller serialization reuse; complete when the service performs no holiday-provider calls, does not add sorting, filtering, or pagination, and lets unexpected repository failures reach centralized error handling; depends on T002.
+- [X] T006 [US1] Implement `src/controllers/list-trip-requests-controller.ts` to call the list service and respond through `sendSuccessResponse()` plus `mapTripRequestToResponse()`; complete when the handler returns HTTP `200` with `{ "success": true, "data": TripRequestResponse[] }`; depends on T005.
+- [X] T007 [US1] Register `GET /trip-requests` in `src/routes/trip-request.routes.ts`; complete when the router exposes the existing `POST /trip-requests` route plus the new collection `GET /trip-requests` route and adds no pagination, filtering, or sorting behavior; depends on T006.
+- [X] T008 [US1] Wire the list retrieval service and controller into `src/app.ts`; complete when `createApp()` composes `listTripRequests` alongside the existing create flow without changing `POST /trip-requests` behavior; depends on T006 and T007.
 
 **Checkpoint**: `GET /trip-requests` is fully functional and independently testable.
 
