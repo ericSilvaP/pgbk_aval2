@@ -15,6 +15,7 @@ import {
   countTripRequests,
   disconnectTestDatabase,
   findTripRequestById,
+  findTripRequestsByPurpose,
   setupTestDatabase,
   testPrisma,
 } from '../../helpers/database.js'
@@ -48,10 +49,33 @@ const createTripRequestSuccessEnvelopeSchema = z.object({
 const errorEnvelopeSchema = z.object({
   success: z.literal(false),
   error: z.object({
-    code: z.string(),
+    code: z.literal('VALIDATION_ERROR').or(z.literal('INTERNAL_SERVER_ERROR')),
     message: z.string(),
   }),
 })
+
+const requiredFieldCases = [
+  'requesterName',
+  'origin',
+  'destination',
+  'departureAt',
+  'returnAt',
+  'purpose',
+  'passengerCount',
+] as const
+
+const invalidTypeCases: ReadonlyArray<{
+  field: keyof typeof validPayload
+  invalidValue: boolean | number | object
+}> = [
+  { field: 'requesterName', invalidValue: 123 },
+  { field: 'origin', invalidValue: 123 },
+  { field: 'destination', invalidValue: 123 },
+  { field: 'departureAt', invalidValue: 123 },
+  { field: 'returnAt', invalidValue: 123 },
+  { field: 'purpose', invalidValue: 123 },
+  { field: 'passengerCount', invalidValue: 'two' as unknown as object },
+]
 
 function createHolidaysProviderDouble() {
   const calls: number[] = []
@@ -67,6 +91,118 @@ function createHolidaysProviderDouble() {
     holidaysProvider,
     calls,
   }
+}
+
+function createValidationApp() {
+  const repositoryCreateCalls: CreateTripRequestRecord[] = []
+  const { holidaysProvider, calls } = createHolidaysProviderDouble()
+  const tripRequestRepository: TripRequestRepository = {
+    async create(input: CreateTripRequestRecord): Promise<TripRequest> {
+      repositoryCreateCalls.push(input)
+      throw new Error('repository create should not be called')
+    },
+  }
+
+  return {
+    app: createApp({
+      tripRequestRepository,
+      holidaysProvider,
+    }),
+    holidaysProviderCalls: calls,
+    repositoryCreateCalls,
+  }
+}
+
+function buildPayloadWithoutField(field: keyof typeof validPayload): Record<string, unknown> {
+  switch (field) {
+    case 'requesterName':
+      return {
+        origin: validPayload.origin,
+        destination: validPayload.destination,
+        departureAt: validPayload.departureAt,
+        returnAt: validPayload.returnAt,
+        purpose: validPayload.purpose,
+        passengerCount: validPayload.passengerCount,
+      }
+    case 'origin':
+      return {
+        requesterName: validPayload.requesterName,
+        destination: validPayload.destination,
+        departureAt: validPayload.departureAt,
+        returnAt: validPayload.returnAt,
+        purpose: validPayload.purpose,
+        passengerCount: validPayload.passengerCount,
+      }
+    case 'destination':
+      return {
+        requesterName: validPayload.requesterName,
+        origin: validPayload.origin,
+        departureAt: validPayload.departureAt,
+        returnAt: validPayload.returnAt,
+        purpose: validPayload.purpose,
+        passengerCount: validPayload.passengerCount,
+      }
+    case 'departureAt':
+      return {
+        requesterName: validPayload.requesterName,
+        origin: validPayload.origin,
+        destination: validPayload.destination,
+        returnAt: validPayload.returnAt,
+        purpose: validPayload.purpose,
+        passengerCount: validPayload.passengerCount,
+      }
+    case 'returnAt':
+      return {
+        requesterName: validPayload.requesterName,
+        origin: validPayload.origin,
+        destination: validPayload.destination,
+        departureAt: validPayload.departureAt,
+        purpose: validPayload.purpose,
+        passengerCount: validPayload.passengerCount,
+      }
+    case 'purpose':
+      return {
+        requesterName: validPayload.requesterName,
+        origin: validPayload.origin,
+        destination: validPayload.destination,
+        departureAt: validPayload.departureAt,
+        returnAt: validPayload.returnAt,
+        passengerCount: validPayload.passengerCount,
+      }
+    case 'passengerCount':
+      return {
+        requesterName: validPayload.requesterName,
+        origin: validPayload.origin,
+        destination: validPayload.destination,
+        departureAt: validPayload.departureAt,
+        returnAt: validPayload.returnAt,
+        purpose: validPayload.purpose,
+      }
+  }
+}
+
+async function expectValidationFailure(
+  payload: Record<string, unknown>,
+  expectedMessage: string,
+): Promise<void> {
+  const { app, holidaysProviderCalls, repositoryCreateCalls } = createValidationApp()
+  const tripRequestCountBefore = await countTripRequests()
+
+  const response = await request(app).post('/trip-requests').send(payload)
+  const responseBody = errorEnvelopeSchema.parse(response.body)
+
+  expect(response.status).toBe(400)
+  expect(responseBody).toStrictEqual({
+    success: false,
+    error: {
+      code: 'VALIDATION_ERROR',
+      message: expectedMessage,
+    },
+  })
+  expect(holidaysProviderCalls).toHaveLength(0)
+  expect(repositoryCreateCalls).toHaveLength(0)
+  expect(await countTripRequests()).toBe(tripRequestCountBefore)
+  expect(await findTripRequestsByPurpose(validPayload.purpose)).toHaveLength(0)
 }
 
 describe('POST /trip-requests', () => {
@@ -124,17 +260,51 @@ describe('POST /trip-requests', () => {
     expect(await countTripRequests()).toBe(1)
   })
 
-  it('rejects client-managed fields before any provider or repository call', async () => {
-    let repositoryCreateCalls = 0
-    const { holidaysProvider, calls } = createHolidaysProviderDouble()
-    const tripRequestRepository: TripRequestRepository = {
-      async create(_input: CreateTripRequestRecord): Promise<TripRequest> {
-        repositoryCreateCalls += 1
-        throw new Error('repository create should not be called')
+  it.each(requiredFieldCases)('rejects missing required field %s', async (field) => {
+    expect.hasAssertions()
+    await expectValidationFailure(buildPayloadWithoutField(field), 'Request body is invalid')
+  })
+
+  it.each(invalidTypeCases)(
+    'rejects invalid field type for $field',
+    async ({ field, invalidValue }) => {
+      expect.hasAssertions()
+      await expectValidationFailure(
+        {
+          ...validPayload,
+          [field]: invalidValue,
+        },
+        'Request body is invalid',
+      )
+    },
+  )
+
+  it('rejects invalid departureAt values', async () => {
+    expect.hasAssertions()
+    await expectValidationFailure(
+      {
+        ...validPayload,
+        departureAt: 'not-a-date',
       },
-    }
+      'departureAt must be a valid date-time',
+    )
+  })
+
+  it('rejects invalid returnAt values', async () => {
+    expect.hasAssertions()
+    await expectValidationFailure(
+      {
+        ...validPayload,
+        returnAt: 'not-a-date',
+      },
+      'returnAt must be a valid date-time',
+    )
+  })
+
+  it('accepts requests when returnAt is equal to departureAt', async () => {
+    const { holidaysProvider } = createHolidaysProviderDouble()
     const app = createApp({
-      tripRequestRepository,
+      tripRequestRepository: new PrismaTripRequestRepository(testPrisma),
       holidaysProvider,
     })
 
@@ -142,23 +312,60 @@ describe('POST /trip-requests', () => {
       .post('/trip-requests')
       .send({
         ...validPayload,
+        returnAt: validPayload.departureAt,
+      })
+    const responseBody = createTripRequestSuccessEnvelopeSchema.parse(response.body)
+
+    expect(response.status).toBe(201)
+    expect(responseBody.data.departureAt).toBe('2026-07-10T11:00:00.000Z')
+    expect(responseBody.data.returnAt).toBe('2026-07-10T11:00:00.000Z')
+    expect(await countTripRequests()).toBe(1)
+  })
+
+  it('rejects requests when returnAt is before departureAt', async () => {
+    expect.hasAssertions()
+    await expectValidationFailure(
+      {
+        ...validPayload,
+        returnAt: '2026-07-09T18:30:00-03:00',
+      },
+      'returnAt must be equal to or later than departureAt',
+    )
+  })
+
+  it('rejects passengerCount equal to zero', async () => {
+    expect.hasAssertions()
+    await expectValidationFailure(
+      {
+        ...validPayload,
+        passengerCount: 0,
+      },
+      'passengerCount must be greater than zero',
+    )
+  })
+
+  it('rejects passengerCount below zero', async () => {
+    expect.hasAssertions()
+    await expectValidationFailure(
+      {
+        ...validPayload,
+        passengerCount: -1,
+      },
+      'passengerCount must be greater than zero',
+    )
+  })
+
+  it('rejects client-managed fields before any provider or repository call', async () => {
+    expect.hasAssertions()
+    await expectValidationFailure(
+      {
+        ...validPayload,
         id: 'client-id',
         status: 'pending',
         createdAt: '2026-06-26T15:45:10.123Z',
-      })
-    const responseBody = errorEnvelopeSchema.parse(response.body)
-
-    expect(response.status).toBe(400)
-    expect(responseBody).toStrictEqual({
-      success: false,
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'id, status, and createdAt must not be provided',
       },
-    })
-    expect(calls).toHaveLength(0)
-    expect(repositoryCreateCalls).toBe(0)
-    expect(await countTripRequests()).toBe(0)
+      'id, status, and createdAt must not be provided',
+    )
   })
 
   it('returns the standardized 500 envelope when the repository throws', async () => {

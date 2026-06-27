@@ -31,6 +31,14 @@ export async function findTripRequestById(id: string) {
   })
 }
 
+export async function findTripRequestsByPurpose(purpose: string) {
+  return testPrisma.tripRequest.findMany({
+    where: {
+      purpose,
+    },
+  })
+}
+
 export async function countTripRequests(): Promise<number> {
   return testPrisma.tripRequest.count()
 }
