@@ -1,7 +1,7 @@
 export interface HolidayRecord {
   date: string
   name: string
-  type?: string
+  type: string
 }
 
 export class HolidaysProviderError extends Error {

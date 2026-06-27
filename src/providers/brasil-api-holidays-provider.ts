@@ -6,10 +6,12 @@ import {
   type HolidaysProvider,
 } from './holidays-provider.js'
 
+const HOLIDAYS_API_TIMEOUT_MS = 5000
+
 const holidayRecordSchema = z.object({
   date: z.string(),
   name: z.string(),
-  type: z.string().optional(),
+  type: z.string(),
 })
 
 const holidaysResponseSchema = z.array(holidayRecordSchema)
@@ -30,20 +32,41 @@ export class BrasilApiHolidaysProvider implements HolidaysProvider {
 
   public async getNationalHolidays(year: number): Promise<HolidayRecord[]> {
     const requestUrl = new URL(`/api/feriados/v1/${String(year)}`, this.options.baseUrl)
+    const abortController = new AbortController()
+    const timeoutId = setTimeout(() => {
+      abortController.abort()
+    }, HOLIDAYS_API_TIMEOUT_MS)
 
     let response: Response
 
     try {
-      response = await this.fetchImplementation(requestUrl)
+      response = await this.fetchImplementation(requestUrl, {
+        signal: abortController.signal,
+      })
     } catch (error) {
+      if (abortController.signal.aborted) {
+        throw new HolidaysProviderError('Failed to fetch national holidays', { cause: error })
+      }
+
       throw new HolidaysProviderError('Failed to fetch national holidays', { cause: error })
+    } finally {
+      clearTimeout(timeoutId)
     }
 
     if (!response.ok) {
       throw new HolidaysProviderError('Failed to fetch national holidays')
     }
 
-    const responseBody: unknown = await response.json()
+    let responseBody: unknown
+
+    try {
+      responseBody = await response.json()
+    } catch (error) {
+      throw new HolidaysProviderError('Failed to parse national holidays response', {
+        cause: error,
+      })
+    }
+
     const parsedResponse = holidaysResponseSchema.safeParse(responseBody)
 
     if (!parsedResponse.success) {
@@ -52,6 +75,10 @@ export class BrasilApiHolidaysProvider implements HolidaysProvider {
       })
     }
 
-    return parsedResponse.data
+    return parsedResponse.data.map((holiday) => ({
+      date: holiday.date,
+      name: holiday.name,
+      type: holiday.type,
+    }))
   }
 }
