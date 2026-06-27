@@ -11,7 +11,8 @@ paths:
       description: >-
         Returns every persisted institutional trip request in the standard
         success envelope. When no trip requests exist, the response data is an
-        empty array.
+        empty array. Collection order is not guaranteed, so clients must not
+        rely on response ordering.
       responses:
         '200':
           description: Trip requests listed successfully

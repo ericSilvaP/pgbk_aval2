@@ -65,10 +65,10 @@
 
 **Purpose**: Align the executable documentation with the implemented retrieval behavior and verify the affected quality gates.
 
-- [ ] T015 Align `specs/002-trip-request-retrieval/contracts/trip-requests-retrieval.openapi.yaml` with the implemented `GET /trip-requests` and `GET /trip-requests/:id` behavior; complete when both endpoints document the `200`, `404`, and `500` envelopes, the empty-list response, and UTC `Z` timestamp examples with no out-of-scope parameters; depends on T008 and T014.
-- [ ] T016 Update `specs/002-trip-request-retrieval/quickstart.md` with executable validation steps for the empty list, populated list, get-by-id success, missing id, and repository-failure scenarios; complete when every retrieval scenario can be exercised from the documented commands and expected outcomes; depends on T003, T009, and T015.
-- [ ] T017 Update or verify `README.md` documentation for `GET /trip-requests` and `GET /trip-requests/:id`; complete when `README.md` documents each endpoint's method, route, behavior, success response shape, not-found response shape where applicable, relevant HTTP status codes, and examples that use the standardized success and error envelopes; depends on T015.
-- [ ] T018 Validate the retrieval implementation against the scripts in `package.json`; complete when `npm run build`, `npm run lint`, and `npm test` all pass with the new retrieval coverage and no out-of-scope endpoint regressions; depends on T008, T014, T015, T016, and T017.
+- [X] T015 Align `specs/002-trip-request-retrieval/contracts/trip-requests-retrieval.openapi.yaml` with the implemented `GET /trip-requests` and `GET /trip-requests/:id` behavior; complete when both endpoints document the `200`, `404`, and `500` envelopes, the empty-list response, and UTC `Z` timestamp examples with no out-of-scope parameters; depends on T008 and T014.
+- [X] T016 Update `specs/002-trip-request-retrieval/quickstart.md` with executable validation steps for the empty list, populated list, get-by-id success, missing id, and repository-failure scenarios; complete when every retrieval scenario can be exercised from the documented commands and expected outcomes; depends on T003, T009, and T015.
+- [X] T017 Update or verify `README.md` documentation for `GET /trip-requests` and `GET /trip-requests/:id`; complete when `README.md` documents each endpoint's method, route, behavior, success response shape, not-found response shape where applicable, relevant HTTP status codes, and examples that use the standardized success and error envelopes; depends on T015.
+- [X] T018 Validate the retrieval implementation against the scripts in `package.json`; complete when `npm run build`, `npm run lint`, and `npm test` all pass with the new retrieval coverage and no out-of-scope endpoint regressions; depends on T008, T014, T015, T016, and T017.
 
 ---
 
