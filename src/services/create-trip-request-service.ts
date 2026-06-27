@@ -1,5 +1,9 @@
 import type { CreateTripRequestHandler } from '../controllers/create-trip-request-controller.js'
-import { createValidationError } from '../errors/app-error.js'
+import {
+  createHolidayTripNotAllowedError,
+  createHolidaysApiUnavailableError,
+  createValidationError,
+} from '../errors/app-error.js'
 import type { HolidaysProvider } from '../providers/holidays-provider.js'
 import type { TripRequestRepository } from '../repositories/trip-request-repository.js'
 import type { CreateTripRequestInput } from '../validation/trip-request-schemas.js'
@@ -31,10 +35,36 @@ function validatePassengerCount(passengerCount: number): void {
   }
 }
 
+function extractDepartureCivilDate(departureAt: string): string {
+  const [departureCivilDate] = departureAt.split('T')
+
+  if (departureCivilDate === undefined || departureCivilDate.length === 0) {
+    throw createValidationError('departureAt must be a valid date-time')
+  }
+
+  return departureCivilDate
+}
+
+function extractDepartureYear(departureCivilDate: string): number {
+  const [yearPart] = departureCivilDate.split('-')
+
+  if (yearPart === undefined || yearPart.length === 0) {
+    throw createValidationError('departureAt must be a valid date-time')
+  }
+
+  const departureYear = Number(yearPart)
+
+  if (!Number.isInteger(departureYear)) {
+    throw createValidationError('departureAt must be a valid date-time')
+  }
+
+  return departureYear
+}
+
 export function createCreateTripRequestService(
   dependencies: CreateTripRequestServiceDependencies,
 ): CreateTripRequestHandler {
-  const { tripRequestRepository } = dependencies
+  const { tripRequestRepository, holidaysProvider } = dependencies
 
   return async (input: CreateTripRequestInput) => {
     const departureAt = normalizeUtcDateTime(input.departureAt, 'departureAt')
@@ -42,6 +72,23 @@ export function createCreateTripRequestService(
 
     validateDateOrdering(departureAt, returnAt)
     validatePassengerCount(input.passengerCount)
+
+    const departureCivilDate = extractDepartureCivilDate(departureAt)
+    const departureYear = extractDepartureYear(departureCivilDate)
+
+    let holidays
+
+    try {
+      holidays = await holidaysProvider.getNationalHolidays(departureYear)
+    } catch (error) {
+      throw createHolidaysApiUnavailableError('national holidays are temporarily unavailable', {
+        cause: error,
+      })
+    }
+
+    if (holidays.some((holiday) => holiday.date === departureCivilDate)) {
+      throw createHolidayTripNotAllowedError('departureAt cannot fall on a national holiday')
+    }
 
     return tripRequestRepository.create({
       requesterName: input.requesterName,

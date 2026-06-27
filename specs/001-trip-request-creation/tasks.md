@@ -110,16 +110,16 @@
 
 ### Tests for User Story 3 (MANDATORY) ⚠️
 
-- [ ] T031 [US3] Add the national holiday rejection HTTP test in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `409`, `HOLIDAY_TRIP_NOT_ALLOWED`, zero persisted rows, and the standard error envelope.
-- [ ] T032 [US3] Add the holidays-provider failure HTTP test in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `502`, `HOLIDAYS_API_UNAVAILABLE`, zero persisted rows, and the standard error envelope.
-- [ ] T033 [US3] Add the no-real-BrasilAPI and no-persistence holiday-flow assertions in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the suite proves provider doubles are used exclusively and rejected holiday flows leave no database record.
+- [X] T031 [US3] Add the national holiday rejection HTTP test in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `409`, `HOLIDAY_TRIP_NOT_ALLOWED`, zero persisted rows, and the standard error envelope.
+- [X] T032 [US3] Add the holidays-provider failure HTTP test in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `502`, `HOLIDAYS_API_UNAVAILABLE`, zero persisted rows, and the standard error envelope.
+- [X] T033 [US3] Add the no-real-BrasilAPI and no-persistence holiday-flow assertions in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the suite proves provider doubles are used exclusively and rejected holiday flows leave no database record.
 
 ### Implementation for User Story 3
 
-- [ ] T034 [US3] Implement departure year and `YYYY-MM-DD` civil-date extraction in `src/services/create-trip-request-service.ts`, with completion confirmed when holiday lookup uses the normalized departure year and civil date only.
-- [ ] T035 [US3] Implement holiday matching and provider-failure error translation in `src/services/create-trip-request-service.ts`, with completion confirmed when holiday matches return `HOLIDAY_TRIP_NOT_ALLOWED` and provider failures return `HOLIDAYS_API_UNAVAILABLE` before persistence.
-- [ ] T036 [US3] Wire the production holidays provider through the application factory and route stack in `src/app.ts`, `src/providers/brasil-api-holidays-provider.ts`, and `src/routes/trip-request.routes.ts`, with completion confirmed when production wiring resolves a `HolidaysProvider` without introducing direct route-level external calls.
-- [ ] T037 [US3] Add holiday-provider test doubles and no-persistence assertions in `tests/integration/trip-requests/create-trip-request.test.ts` and `tests/helpers/database.ts`, with completion confirmed when US3 tests can control provider outcomes and verify no row is written on rejected holiday flows.
+- [X] T034 [US3] Implement departure year and `YYYY-MM-DD` civil-date extraction in `src/services/create-trip-request-service.ts`, with completion confirmed when holiday lookup uses the normalized departure year and civil date only.
+- [X] T035 [US3] Implement holiday matching and provider-failure error translation in `src/services/create-trip-request-service.ts`, with completion confirmed when holiday matches return `HOLIDAY_TRIP_NOT_ALLOWED` and provider failures return `HOLIDAYS_API_UNAVAILABLE` before persistence.
+- [X] T036 [US3] Wire the production holidays provider through the application factory and route stack in `src/app.ts`, `src/providers/brasil-api-holidays-provider.ts`, and `src/routes/trip-request.routes.ts`, with completion confirmed when production wiring resolves a `HolidaysProvider` without introducing direct route-level external calls.
+- [X] T037 [US3] Add holiday-provider test doubles and no-persistence assertions in `tests/integration/trip-requests/create-trip-request.test.ts` and `tests/helpers/database.ts`, with completion confirmed when US3 tests can control provider outcomes and verify no row is written on rejected holiday flows.
 
 **Checkpoint**: All user stories should now be independently functional
 

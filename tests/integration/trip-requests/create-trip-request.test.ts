@@ -3,7 +3,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 
 import { createApp } from '../../../src/app.js'
-import type { HolidaysProvider } from '../../../src/providers/holidays-provider.js'
+import type {
+  HolidayRecord,
+  HolidaysProvider,
+  HolidaysProviderError,
+} from '../../../src/providers/holidays-provider.js'
 import { PrismaTripRequestRepository } from '../../../src/repositories/prisma-trip-request-repository.js'
 import type {
   CreateTripRequestRecord,
@@ -49,7 +53,12 @@ const createTripRequestSuccessEnvelopeSchema = z.object({
 const errorEnvelopeSchema = z.object({
   success: z.literal(false),
   error: z.object({
-    code: z.literal('VALIDATION_ERROR').or(z.literal('INTERNAL_SERVER_ERROR')),
+    code: z.enum([
+      'VALIDATION_ERROR',
+      'HOLIDAY_TRIP_NOT_ALLOWED',
+      'HOLIDAYS_API_UNAVAILABLE',
+      'INTERNAL_SERVER_ERROR',
+    ]),
     message: z.string(),
   }),
 })
@@ -77,13 +86,23 @@ const invalidTypeCases: ReadonlyArray<{
   { field: 'passengerCount', invalidValue: 'two' as unknown as object },
 ]
 
-function createHolidaysProviderDouble() {
+interface HolidaysProviderDoubleOptions {
+  holidays?: HolidayRecord[]
+  error?: HolidaysProviderError | Error
+}
+
+function createHolidaysProviderDouble(options: HolidaysProviderDoubleOptions = {}) {
   const calls: number[] = []
 
   const holidaysProvider: HolidaysProvider = {
     async getNationalHolidays(year: number) {
       calls.push(year)
-      return []
+
+      if (options.error) {
+        throw options.error
+      }
+
+      return options.holidays ?? []
     },
   }
 
@@ -219,8 +238,8 @@ describe('POST /trip-requests', () => {
     await disconnectTestDatabase()
   })
 
-  it('creates a trip request, returns 201, and persists the PostgreSQL row', async () => {
-    const { holidaysProvider } = createHolidaysProviderDouble()
+  it('creates a trip request, returns 201, persists the PostgreSQL row, and calls the holidays provider once', async () => {
+    const { holidaysProvider, calls } = createHolidaysProviderDouble()
     const app = createApp({
       tripRequestRepository: new PrismaTripRequestRepository(testPrisma),
       holidaysProvider,
@@ -241,6 +260,7 @@ describe('POST /trip-requests', () => {
     expect(responseBody.data.passengerCount).toBe(validPayload.passengerCount)
     expect(responseBody.data.status).toBe('pending')
     expect(typeof responseBody.data.createdAt).toBe('string')
+    expect(calls).toStrictEqual([2026])
 
     const persistedTripRequest = await findTripRequestById(responseBody.data.id)
 
@@ -302,7 +322,7 @@ describe('POST /trip-requests', () => {
   })
 
   it('accepts requests when returnAt is equal to departureAt', async () => {
-    const { holidaysProvider } = createHolidaysProviderDouble()
+    const { holidaysProvider, calls } = createHolidaysProviderDouble()
     const app = createApp({
       tripRequestRepository: new PrismaTripRequestRepository(testPrisma),
       holidaysProvider,
@@ -319,6 +339,7 @@ describe('POST /trip-requests', () => {
     expect(response.status).toBe(201)
     expect(responseBody.data.departureAt).toBe('2026-07-10T11:00:00.000Z')
     expect(responseBody.data.returnAt).toBe('2026-07-10T11:00:00.000Z')
+    expect(calls).toStrictEqual([2026])
     expect(await countTripRequests()).toBe(1)
   })
 
@@ -366,6 +387,90 @@ describe('POST /trip-requests', () => {
       },
       'id, status, and createdAt must not be provided',
     )
+  })
+
+  it('rejects national holiday departures with HTTP 409 and no persistence', async () => {
+    const holidayPurpose = 'Holiday rejection trip'
+    let repositoryCreateCalls = 0
+    const { holidaysProvider, calls } = createHolidaysProviderDouble({
+      holidays: [
+        {
+          date: '2026-07-10',
+          name: 'Test National Holiday',
+          type: 'national',
+        },
+      ],
+    })
+    const tripRequestRepository: TripRequestRepository = {
+      async create(_input: CreateTripRequestRecord): Promise<TripRequest> {
+        repositoryCreateCalls += 1
+        throw new Error('repository create should not be called')
+      },
+    }
+    const app = createApp({
+      tripRequestRepository,
+      holidaysProvider,
+    })
+
+    const response = await request(app)
+      .post('/trip-requests')
+      .send({
+        ...validPayload,
+        purpose: holidayPurpose,
+      })
+    const responseBody = errorEnvelopeSchema.parse(response.body)
+
+    expect(response.status).toBe(409)
+    expect(responseBody).toStrictEqual({
+      success: false,
+      error: {
+        code: 'HOLIDAY_TRIP_NOT_ALLOWED',
+        message: 'departureAt cannot fall on a national holiday',
+      },
+    })
+    expect(calls).toStrictEqual([2026])
+    expect(repositoryCreateCalls).toBe(0)
+    expect(await countTripRequests()).toBe(0)
+    expect(await findTripRequestsByPurpose(holidayPurpose)).toHaveLength(0)
+  })
+
+  it('returns HTTP 502 when the holidays provider fails and does not persist a record', async () => {
+    const failurePurpose = 'Provider failure trip'
+    let repositoryCreateCalls = 0
+    const { holidaysProvider, calls } = createHolidaysProviderDouble({
+      error: new Error('provider exploded'),
+    })
+    const tripRequestRepository: TripRequestRepository = {
+      async create(_input: CreateTripRequestRecord): Promise<TripRequest> {
+        repositoryCreateCalls += 1
+        throw new Error('repository create should not be called')
+      },
+    }
+    const app = createApp({
+      tripRequestRepository,
+      holidaysProvider,
+    })
+
+    const response = await request(app)
+      .post('/trip-requests')
+      .send({
+        ...validPayload,
+        purpose: failurePurpose,
+      })
+    const responseBody = errorEnvelopeSchema.parse(response.body)
+
+    expect(response.status).toBe(502)
+    expect(responseBody).toStrictEqual({
+      success: false,
+      error: {
+        code: 'HOLIDAYS_API_UNAVAILABLE',
+        message: 'national holidays are temporarily unavailable',
+      },
+    })
+    expect(calls).toStrictEqual([2026])
+    expect(repositoryCreateCalls).toBe(0)
+    expect(await countTripRequests()).toBe(0)
+    expect(await findTripRequestsByPurpose(failurePurpose)).toHaveLength(0)
   })
 
   it('returns the standardized 500 envelope when the repository throws', async () => {
