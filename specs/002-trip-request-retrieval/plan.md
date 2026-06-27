@@ -6,7 +6,7 @@
 
 ## Summary
 
-Implement read-only trip request retrieval on top of the existing Express, Prisma, and PostgreSQL architecture from Spec 001. The work extends `TripRequestRepository` and `PrismaTripRequestRepository` with list and lookup methods, adds dedicated retrieval services and controllers, registers `GET /trip-requests` and `GET /trip-requests/:id` in the existing trip request router, reuses the standardized success and error envelopes plus the trip request response mapper, and verifies empty-list, populated-list, found, not-found, UTC-date, and repository-failure behavior with Vitest integration tests.
+Implement read-only trip request retrieval on top of the existing Express, Prisma, and PostgreSQL architecture from Spec 001. The work extends `TripRequestRepository` and `PrismaTripRequestRepository` with list and lookup methods, adds dedicated retrieval services and controllers, registers `GET /trip-requests` and `GET /trip-requests/:id` in the existing trip request router, reuses the standardized success and error envelopes plus the trip request response mapper, and verifies empty-list, populated-list, found, not-found, UTC-date, unordered-list, and repository-failure behavior with Vitest integration tests.
 
 ## Technical Context
 
@@ -16,7 +16,7 @@ Implement read-only trip request retrieval on top of the existing Express, Prism
 
 **Storage**: PostgreSQL 16 via Docker Compose, accessed through Prisma
 
-**Testing**: Vitest 2 in Node environment with Supertest; integration tests use the existing PostgreSQL helper and injected doubles only for unexpected repository failures or unused holiday-provider wiring
+**Testing**: Vitest 2 in Node environment with Supertest; integration tests use the existing PostgreSQL helper and injected doubles only for unexpected repository failures or unused holiday-provider wiring, and list assertions must be order-insensitive because the API does not guarantee collection order
 
 **Target Platform**: Backend-only REST API running on Node.js
 
@@ -24,7 +24,7 @@ Implement read-only trip request retrieval on top of the existing Express, Prism
 
 **Performance Goals**: Deterministic read-only retrieval with one repository read for collection listing, one repository read for single-record lookup, zero holiday-provider calls during retrieval, and consistent UTC serialization for every returned date field
 
-**Constraints**: Preserve the existing `POST /trip-requests` flow except for safe repository or mapper contract reuse; keep standardized success and error envelopes, centralized error handling, and the Express app factory; add only `GET /trip-requests` and `GET /trip-requests/:id`; return an empty array when no records exist; return `TRIP_REQUEST_NOT_FOUND` with HTTP `404` for missing identifiers; return `INTERNAL_SERVER_ERROR` for unexpected repository failures without leaking internal details; do not add pagination, filtering, sorting, authentication, authorization, holiday lookups, or frontend behavior
+**Constraints**: Preserve the existing `POST /trip-requests` flow except for safe repository or mapper contract reuse; keep standardized success and error envelopes, centralized error handling, and the Express app factory; add only `GET /trip-requests` and `GET /trip-requests/:id`; return an empty array when no records exist; return all persisted trip requests without guaranteeing collection order; require order-insensitive list assertions in automated tests; return `TRIP_REQUEST_NOT_FOUND` with HTTP `404` for missing identifiers; return `INTERNAL_SERVER_ERROR` for unexpected repository failures without leaking internal details; do not add pagination, filtering, sorting, authentication, authorization, holiday lookups, or frontend behavior
 
 **Scale/Scope**: Retrieval of persisted `trip-requests` records only, including list-all and get-by-id behavior plus integration coverage
 
@@ -43,6 +43,7 @@ Implement read-only trip request retrieval on top of the existing Express, Prism
 - [x] Database access remains isolated behind `TripRequestRepository` and the Prisma-backed implementation.
 - [x] The existing Express app factory remains the composition root for production and integration tests.
 - [x] Vitest coverage is planned for empty list, populated list, existing id, missing id, UTC date formatting, and unexpected repository failures.
+- [x] The `GET /trip-requests` contract is explicitly unordered, so consumers and automated tests must not rely on response ordering.
 - [x] README changes are not required unless implementation reveals missing setup or endpoint documentation.
 - [x] Technical identifiers, files, scripts, tests, and documentation remain in English.
 
@@ -116,7 +117,7 @@ prisma/
 └── seed.ts
 ```
 
-**Structure Decision**: Keep the current application factory and router composition intact, extend the repository contract instead of introducing a parallel read model, add one service and one controller per retrieval endpoint to mirror the existing creation flow, reuse the existing response mapper and success helper for serialization, and extend the PostgreSQL test helper only where necessary to seed and inspect retrieval records deterministically.
+**Structure Decision**: Keep the current application factory and router composition intact, extend the repository contract instead of introducing a parallel read model, add one service and one controller per retrieval endpoint to mirror the existing creation flow, reuse the existing response mapper and success helper for serialization, extend the PostgreSQL test helper only where necessary to seed and inspect retrieval records deterministically, and keep list verification order-insensitive because the API does not guarantee collection order.
 
 ## Complexity Tracking
 

@@ -12,18 +12,19 @@
 
 ### User Story 1 - List persisted trip requests (Priority: P1)
 
-An API consumer requests the current set of persisted institutional trip requests and receives a complete list in the standard success envelope, including an empty list when no trip requests exist.
+An API consumer requests the current set of persisted institutional trip requests and receives a complete list in the standard success envelope, including an empty list when no trip requests exist. The API does not guarantee collection order, so consumers must not rely on response ordering.
 
 **Why this priority**: Listing all persisted trip requests is the primary retrieval capability and gives API consumers immediate visibility into the current travel request dataset.
 
-**Independent Test**: Send `GET /trip-requests` against an empty dataset and against a dataset with persisted trip requests, then verify HTTP `200 OK`, the standard success envelope, and the expected trip request fields in every returned item.
+**Independent Test**: Send `GET /trip-requests` against an empty dataset and against a dataset with persisted trip requests, then verify HTTP `200 OK`, the standard success envelope, the expected trip request fields in every returned item, and list contents with order-insensitive assertions.
 
 **Acceptance Scenarios**:
 
-1. **Given** persisted trip requests exist, **When** the API consumer sends `GET /trip-requests`, **Then** the system returns HTTP `200 OK` with `{ "success": true, "data": [ ... ] }` containing all persisted trip requests.
+1. **Given** persisted trip requests exist, **When** the API consumer sends `GET /trip-requests`, **Then** the system returns HTTP `200 OK` with `{ "success": true, "data": [ ... ] }` containing all persisted trip requests without guaranteeing collection order.
 2. **Given** no trip requests exist, **When** the API consumer sends `GET /trip-requests`, **Then** the system returns HTTP `200 OK` with `{ "success": true, "data": [] }`.
 3. **Given** trip requests are returned in the list response, **When** each item is inspected, **Then** it contains `id`, `requesterName`, `origin`, `destination`, `departureAt`, `returnAt`, `purpose`, `passengerCount`, `status`, and `createdAt` using the same field names as trip request creation responses.
 4. **Given** trip requests are returned in the list response, **When** date fields are inspected, **Then** `departureAt`, `returnAt`, and `createdAt` are complete ISO 8601 UTC timestamps ending with `Z`.
+5. **Given** the API consumer inspects the list response, **When** multiple trip requests are returned, **Then** the consumer must treat the collection as unordered and must not rely on response ordering.
 
 ---
 
@@ -45,6 +46,7 @@ An API consumer requests a specific persisted trip request by identifier and eit
 ### Edge Cases
 
 - `GET /trip-requests` is called when no trip requests exist; the system returns HTTP `200 OK` with an empty `data` array.
+- `GET /trip-requests` returns multiple persisted trip requests; the system still returns all records, but the API does not guarantee collection order and clients must not rely on response ordering.
 - A persisted trip request was originally stored with timezone-aware date values; all returned `departureAt`, `returnAt`, and `createdAt` values are emitted as complete ISO 8601 UTC timestamps ending with `Z`.
 - `GET /trip-requests/:id` is called with an identifier that does not match any persisted trip request; the system returns `TRIP_REQUEST_NOT_FOUND` with HTTP `404 Not Found`.
 - An unexpected persistence-layer failure occurs during listing; the system returns `INTERNAL_SERVER_ERROR` without exposing SQL statements, stack traces, connection details, or storage-specific metadata.
@@ -68,6 +70,8 @@ An API consumer requests a specific persisted trip request by identifier and eit
 - **FR-002**: `GET /trip-requests` MUST return HTTP `200 OK`.
 - **FR-003**: `GET /trip-requests` MUST return the standard success envelope with `data` as an array.
 - **FR-004**: `GET /trip-requests` MUST return every persisted institutional trip request available at the time of the request.
+- **FR-004A**: `GET /trip-requests` MUST return all persisted institutional trip requests without guaranteeing collection order.
+- **FR-004B**: Consumers and automated tests for `GET /trip-requests` MUST use order-insensitive assertions for list contents and MUST NOT rely on response ordering.
 - **FR-005**: If no trip requests exist, `GET /trip-requests` MUST return an empty array in `data`.
 - **FR-006**: Every trip request returned by `GET /trip-requests` MUST include `id`, `requesterName`, `origin`, `destination`, `departureAt`, `returnAt`, `purpose`, `passengerCount`, `status`, and `createdAt`.
 - **FR-007**: The system MUST use the same response field names for retrieval responses that it uses for trip request creation responses.
