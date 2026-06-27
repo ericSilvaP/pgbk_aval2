@@ -61,17 +61,17 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T014 [US1] Add the successful creation HTTP test with persistence verification in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `201`, the standard success envelope, generated `id`/`createdAt`, `pending` status, UTC timestamps, and a persisted PostgreSQL row.
-- [ ] T015 [US1] Add the client-managed field rejection HTTP test for `id`, `status`, and `createdAt` in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `400`, `success: false`, `VALIDATION_ERROR`, an English error message, zero holidays-provider calls, zero repository create calls, and no persisted record.
-- [ ] T016 [US1] Add the app-level HTTP repository failure test using an injected throwing repository in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `500`, `INTERNAL_SERVER_ERROR`, the standard error envelope, and no leaked internal details.
+- [X] T014 [US1] Add the successful creation HTTP test with persistence verification in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `201`, the standard success envelope, generated `id`/`createdAt`, `pending` status, UTC timestamps, and a persisted PostgreSQL row.
+- [X] T015 [US1] Add the client-managed field rejection HTTP test for `id`, `status`, and `createdAt` in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `400`, `success: false`, `VALIDATION_ERROR`, an English error message, zero holidays-provider calls, zero repository create calls, and no persisted record.
+- [X] T016 [US1] Add the app-level HTTP repository failure test using an injected throwing repository in `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the test asserts HTTP `500`, `INTERNAL_SERVER_ERROR`, the standard error envelope, and no leaked internal details.
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] Implement server-managed field rejection in `src/validation/trip-request-schemas.ts`, with completion confirmed when `id`, `status`, and `createdAt` are rejected before the service proceeds.
-- [ ] T018 [P] [US1] Implement successful trip request response mapping in `src/responses/trip-request-response-mapper.ts` and `src/responses/send-success-response.ts`, with completion confirmed when successful responses are produced exclusively through those helpers.
-- [ ] T019 [US1] Implement the core create-trip-request success flow with repository persistence and `pending` status in `src/services/create-trip-request-service.ts`, with completion confirmed when valid non-holiday input reaches persistence and returns the created trip request model.
-- [ ] T020 [US1] Connect the controller and route to the successful creation flow in `src/controllers/create-trip-request-controller.ts`, `src/routes/trip-request.routes.ts`, and `src/app.ts`, with completion confirmed when `POST /trip-requests` resolves through the controller-service-repository chain.
-- [ ] T021 [US1] Implement PostgreSQL cleanup and created-record assertions in `tests/helpers/database.ts` and `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the US1 tests can verify durable persistence and clean state between runs.
+- [X] T017 [P] [US1] Implement server-managed field rejection in `src/validation/trip-request-schemas.ts`, with completion confirmed when `id`, `status`, and `createdAt` are rejected before the service proceeds.
+- [X] T018 [P] [US1] Implement successful trip request response mapping in `src/responses/trip-request-response-mapper.ts` and `src/responses/send-success-response.ts`, with completion confirmed when successful responses are produced exclusively through those helpers.
+- [X] T019 [US1] Implement the core create-trip-request success flow with repository persistence and `pending` status in `src/services/create-trip-request-service.ts`, with completion confirmed when valid non-holiday input reaches persistence and returns the created trip request model.
+- [X] T020 [US1] Connect the controller and route to the successful creation flow in `src/controllers/create-trip-request-controller.ts`, `src/routes/trip-request.routes.ts`, and `src/app.ts`, with completion confirmed when `POST /trip-requests` resolves through the controller-service-repository chain.
+- [X] T021 [US1] Implement PostgreSQL cleanup and created-record assertions in `tests/helpers/database.ts` and `tests/integration/trip-requests/create-trip-request.test.ts`, with completion confirmed when the US1 tests can verify durable persistence and clean state between runs.
 
 **Checkpoint**: User Story 1 should be fully functional and independently testable
 
