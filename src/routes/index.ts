@@ -1,9 +1,15 @@
 import { Router } from 'express'
 
+import type { HolidaysRoutesDependencies } from './holidays.routes.js'
+import { createHolidaysRouter } from './holidays.routes.js'
 import type { TripRequestRoutesDependencies } from './trip-request.routes.js'
 import { createTripRequestRouter } from './trip-request.routes.js'
 
-export function createRouter(dependencies: TripRequestRoutesDependencies): Router {
+export interface RouterDependencies
+  extends TripRequestRoutesDependencies,
+    HolidaysRoutesDependencies {}
+
+export function createRouter(dependencies: RouterDependencies): Router {
   const router = Router()
 
   router.get('/health', (_request, response) => {
@@ -15,6 +21,7 @@ export function createRouter(dependencies: TripRequestRoutesDependencies): Route
     })
   })
 
+  router.use(createHolidaysRouter(dependencies))
   router.use(createTripRequestRouter(dependencies))
 
   return router
