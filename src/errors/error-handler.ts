@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler } from 'express'
 
-import { AppError } from './app-error.js'
+import { AppError, createInternalServerError } from './app-error.js'
 
 export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
   if (error instanceof AppError) {
@@ -17,11 +17,13 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, _ne
 
   console.error(error)
 
-  response.status(500).json({
+  const internalServerError = createInternalServerError()
+
+  response.status(internalServerError.statusCode).json({
     success: false,
     error: {
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'An unexpected error occurred',
+      code: internalServerError.code,
+      message: internalServerError.message,
     },
   })
 }

@@ -1,10 +1,30 @@
-import express from 'express'
+import express, { type Express } from 'express'
 
+import { createCreateTripRequestController } from './controllers/create-trip-request-controller.js'
 import { errorHandler } from './errors/error-handler.js'
-import { router } from './routes/index.js'
+import type { HolidaysProvider } from './providers/holidays-provider.js'
+import type { TripRequestRepository } from './repositories/trip-request-repository.js'
+import { createRouter } from './routes/index.js'
+import { createCreateTripRequestService } from './services/create-trip-request-service.js'
 
-export const app = express()
+export interface AppDependencies {
+  tripRequestRepository: TripRequestRepository
+  holidaysProvider: HolidaysProvider
+}
 
-app.use(express.json())
-app.use(router)
-app.use(errorHandler)
+export function createApp(dependencies: AppDependencies): Express {
+  const app = express()
+  const createTripRequest = createCreateTripRequestService(dependencies)
+
+  app.use(express.json())
+  app.use(
+    createRouter({
+      createTripRequestController: createCreateTripRequestController({
+        createTripRequest,
+      }),
+    }),
+  )
+  app.use(errorHandler)
+
+  return app
+}

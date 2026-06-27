@@ -1,0 +1,252 @@
+openapi: 3.0.3
+info:
+  title: Trip Requests API Contract
+  version: 1.0.0
+  description: Contract for the complete institutional trip request creation flow.
+paths:
+  /trip-requests:
+    post:
+      summary: Create an institutional trip request
+      operationId: createTripRequest
+      description: >-
+        Validates the request locally, normalizes dates to UTC, checks the
+        departure civil date against national holidays, persists approved
+        requests with status `pending`, and always responds with the standardized
+        success or error envelope.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTripRequestRequest'
+            examples:
+              validRequest:
+                summary: Valid creation payload
+                value:
+                  requesterName: Maria Silva
+                  origin: Fortaleza
+                  destination: Recife
+                  departureAt: 2026-07-10T08:00:00-03:00
+                  returnAt: 2026-07-12T18:30:00-03:00
+                  purpose: Institutional meeting
+                  passengerCount: 2
+              reservedFieldPayload:
+                summary: Invalid payload with server-managed field
+                value:
+                  requesterName: Maria Silva
+                  origin: Fortaleza
+                  destination: Recife
+                  departureAt: 2026-07-10T08:00:00-03:00
+                  returnAt: 2026-07-12T18:30:00-03:00
+                  purpose: Institutional meeting
+                  passengerCount: 2
+                  status: pending
+              invalidDatePayload:
+                summary: Invalid payload with malformed departureAt
+                value:
+                  requesterName: Maria Silva
+                  origin: Fortaleza
+                  destination: Recife
+                  departureAt: not-a-date
+                  returnAt: 2026-07-12T18:30:00-03:00
+                  purpose: Institutional meeting
+                  passengerCount: 2
+      responses:
+        '201':
+          description: Trip request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTripRequestSuccessEnvelope'
+              examples:
+                created:
+                  value:
+                    success: true
+                    data:
+                      id: 9d716459-4fc8-4bd1-82d7-9df1f5569dd7
+                      requesterName: Maria Silva
+                      origin: Fortaleza
+                      destination: Recife
+                      departureAt: 2026-07-10T11:00:00.000Z
+                      returnAt: 2026-07-12T21:30:00.000Z
+                      purpose: Institutional meeting
+                      passengerCount: 2
+                      status: pending
+                      createdAt: 2026-06-26T15:45:10.123Z
+        '400':
+          description: >-
+            Validation failure for malformed input, reserved fields, invalid
+            date values, invalid date ordering, or invalid passenger count.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                reservedFieldsRejected:
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: id, status, and createdAt must not be provided
+                invalidDateOrder:
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: returnAt must be equal to or later than departureAt
+                invalidDateTime:
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: departureAt must be a valid date-time
+                invalidPassengerCount:
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: passengerCount must be greater than zero
+        '409':
+          description: Departure date falls on a national holiday
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                holidayRejected:
+                  value:
+                    success: false
+                    error:
+                      code: HOLIDAY_TRIP_NOT_ALLOWED
+                      message: departureAt cannot fall on a national holiday
+        '502':
+          description: Holidays provider failed after local validation succeeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                holidaysUnavailable:
+                  value:
+                    success: false
+                    error:
+                      code: HOLIDAYS_API_UNAVAILABLE
+                      message: national holidays are temporarily unavailable
+        '500':
+          description: Unexpected persistence failure handled centrally
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                internalError:
+                  value:
+                    success: false
+                    error:
+                      code: INTERNAL_SERVER_ERROR
+                      message: An unexpected error occurred
+components:
+  schemas:
+    CreateTripRequestRequest:
+      type: object
+      required:
+        - requesterName
+        - origin
+        - destination
+        - departureAt
+        - returnAt
+        - purpose
+        - passengerCount
+      properties:
+        requesterName:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        departureAt:
+          type: string
+          format: date-time
+        returnAt:
+          type: string
+          format: date-time
+        purpose:
+          type: string
+        passengerCount:
+          type: integer
+      description: >-
+        Client payload for trip request creation. `id`, `status`, and
+        `createdAt` are forbidden because they are server-managed.
+    TripRequest:
+      type: object
+      required:
+        - id
+        - requesterName
+        - origin
+        - destination
+        - departureAt
+        - returnAt
+        - purpose
+        - passengerCount
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+        requesterName:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        departureAt:
+          type: string
+          format: date-time
+        returnAt:
+          type: string
+          format: date-time
+        purpose:
+          type: string
+        passengerCount:
+          type: integer
+        status:
+          type: string
+          enum: [pending]
+        createdAt:
+          type: string
+          format: date-time
+    CreateTripRequestSuccessEnvelope:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: '#/components/schemas/TripRequest'
+    ErrorEnvelope:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - HOLIDAY_TRIP_NOT_ALLOWED
+                - HOLIDAYS_API_UNAVAILABLE
+                - INTERNAL_SERVER_ERROR
+            message:
+              type: string
