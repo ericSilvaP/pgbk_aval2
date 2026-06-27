@@ -63,7 +63,7 @@ The default `.env.example` values match `docker-compose.yml`:
 - `npm run lint`: run ESLint
 - `npm test`: run Vitest integration tests
 
-## Endpoint
+## Endpoints
 
 ### `POST /trip-requests`
 
@@ -159,19 +159,146 @@ Unexpected repository failure response: `500 Internal Server Error`
 }
 ```
 
-Internal stack traces never appear in HTTP response bodies.
+### `GET /trip-requests`
+
+Lists all persisted trip requests in the standardized success envelope.
+
+Behavior:
+
+- Returns `200 OK` with `data` as an array.
+- Returns an empty array when no trip requests exist.
+- Returns canonical trip request fields with `departureAt`, `returnAt`, and `createdAt` as complete UTC ISO 8601 strings ending with `Z`.
+- Collection order is not guaranteed. Clients and automated checks must verify list contents without relying on response ordering.
+
+Success response: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "requesterName": "Maria Silva",
+      "origin": "Fortaleza",
+      "destination": "Recife",
+      "departureAt": "2026-07-10T11:00:00.000Z",
+      "returnAt": "2026-07-12T21:30:00.000Z",
+      "purpose": "Institutional meeting",
+      "passengerCount": 2,
+      "status": "pending",
+      "createdAt": "2026-06-26T15:45:10.123Z"
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "requesterName": "Joao Costa",
+      "origin": "Sobral",
+      "destination": "Natal",
+      "departureAt": "2026-08-03T13:00:00.000Z",
+      "returnAt": "2026-08-05T18:00:00.000Z",
+      "purpose": "Technical visit",
+      "passengerCount": 3,
+      "status": "canceled",
+      "createdAt": "2026-06-27T09:00:00.000Z"
+    }
+  ]
+}
+```
+
+Empty-list response: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": []
+}
+```
+
+Unexpected repository failure response: `500 Internal Server Error`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INTERNAL_SERVER_ERROR",
+    "message": "An unexpected error occurred"
+  }
+}
+```
+
+### `GET /trip-requests/:id`
+
+Retrieves one persisted trip request by identifier in the standardized success envelope.
+
+Behavior:
+
+- Returns `200 OK` with the matching trip request when the id exists.
+- Returns canonical trip request fields with `departureAt`, `returnAt`, and `createdAt` as complete UTC ISO 8601 strings ending with `Z`.
+- Returns `404 Not Found` with `TRIP_REQUEST_NOT_FOUND` when no persisted trip request matches the provided id.
+
+Success response: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "requesterName": "Maria Silva",
+    "origin": "Fortaleza",
+    "destination": "Recife",
+    "departureAt": "2026-07-10T11:00:00.000Z",
+    "returnAt": "2026-07-12T21:30:00.000Z",
+    "purpose": "Institutional meeting",
+    "passengerCount": 2,
+    "status": "pending",
+    "createdAt": "2026-06-26T15:45:10.123Z"
+  }
+}
+```
+
+Not-found response: `404 Not Found`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "TRIP_REQUEST_NOT_FOUND",
+    "message": "Trip request not found"
+  }
+}
+```
+
+Unexpected repository failure response: `500 Internal Server Error`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INTERNAL_SERVER_ERROR",
+    "message": "An unexpected error occurred"
+  }
+}
+```
+
+Internal stack traces and database details never appear in HTTP response bodies.
 
 ## Testing Notes
 
 - Validation failures do not call `HolidaysProvider.getNationalHolidays()`.
 - Validation failures do not call `TripRequestRepository.create()`.
 - Holiday rejections and holiday-provider failures do not call `TripRequestRepository.create()`.
+- `GET /trip-requests` tests use order-insensitive assertions for list contents because collection order is not guaranteed.
+- Retrieval failure tests assert `INTERNAL_SERVER_ERROR` without exposing internal repository details.
 - Tests use injected `HolidaysProvider` fakes and never access the real BrasilAPI.
 
 ## Feature References
 
-- Spec: `specs/001-trip-request-creation/spec.md`
-- Plan: `specs/001-trip-request-creation/plan.md`
-- Task list: `specs/001-trip-request-creation/tasks.md`
-- OpenAPI contract: `specs/001-trip-request-creation/contracts/post-trip-requests.openapi.yaml`
-- Quickstart: `specs/001-trip-request-creation/quickstart.md`
+- Spec 001: `specs/001-trip-request-creation/spec.md`
+- Plan 001: `specs/001-trip-request-creation/plan.md`
+- Tasks 001: `specs/001-trip-request-creation/tasks.md`
+- Contract 001: `specs/001-trip-request-creation/contracts/post-trip-requests.openapi.yaml`
+- Quickstart 001: `specs/001-trip-request-creation/quickstart.md`
+- Spec 002: `specs/002-trip-request-retrieval/spec.md`
+- Plan 002: `specs/002-trip-request-retrieval/plan.md`
+- Tasks 002: `specs/002-trip-request-retrieval/tasks.md`
+- Contract 002: `specs/002-trip-request-retrieval/contracts/trip-requests-retrieval.openapi.yaml`
+- Quickstart 002: `specs/002-trip-request-retrieval/quickstart.md`

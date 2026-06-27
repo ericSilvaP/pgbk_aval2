@@ -1,0 +1,213 @@
+openapi: 3.0.3
+info:
+  title: Trip Requests Retrieval API Contract
+  version: 1.0.0
+  description: Contract for listing persisted trip requests and retrieving one by id.
+paths:
+  /trip-requests:
+    get:
+      summary: List persisted trip requests
+      operationId: listTripRequests
+      description: >-
+        Returns every persisted institutional trip request in the standard
+        success envelope. When no trip requests exist, the response data is an
+        empty array. Collection order is not guaranteed, so clients must not
+        rely on response ordering.
+      responses:
+        '200':
+          description: Trip requests listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripRequestListSuccessEnvelope'
+              examples:
+                emptyList:
+                  value:
+                    success: true
+                    data: []
+                populatedList:
+                  value:
+                    success: true
+                    data:
+                      - id: 9d716459-4fc8-4bd1-82d7-9df1f5569dd7
+                        requesterName: Maria Silva
+                        origin: Fortaleza
+                        destination: Recife
+                        departureAt: 2026-07-10T11:00:00.000Z
+                        returnAt: 2026-07-12T21:30:00.000Z
+                        purpose: Institutional meeting
+                        passengerCount: 2
+                        status: pending
+                        createdAt: 2026-06-26T15:45:10.123Z
+                      - id: 4ecec8fd-0f87-45f2-b1f6-bb9b0ce0c625
+                        requesterName: Joao Costa
+                        origin: Sobral
+                        destination: Natal
+                        departureAt: 2026-08-03T13:00:00.000Z
+                        returnAt: 2026-08-05T18:00:00.000Z
+                        purpose: Technical visit
+                        passengerCount: 3
+                        status: canceled
+                        createdAt: 2026-06-27T09:00:00.000Z
+        '500':
+          description: Unexpected repository failure handled centrally
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                internalError:
+                  value:
+                    success: false
+                    error:
+                      code: INTERNAL_SERVER_ERROR
+                      message: An unexpected error occurred
+  /trip-requests/{id}:
+    get:
+      summary: Retrieve a persisted trip request by id
+      operationId: getTripRequestById
+      description: >-
+        Returns the matching institutional trip request in the standard success
+        envelope or a standardized not-found error when the identifier does not
+        exist.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Persisted trip request identifier.
+      responses:
+        '200':
+          description: Matching trip request returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripRequestSuccessEnvelope'
+              examples:
+                found:
+                  value:
+                    success: true
+                    data:
+                      id: 9d716459-4fc8-4bd1-82d7-9df1f5569dd7
+                      requesterName: Maria Silva
+                      origin: Fortaleza
+                      destination: Recife
+                      departureAt: 2026-07-10T11:00:00.000Z
+                      returnAt: 2026-07-12T21:30:00.000Z
+                      purpose: Institutional meeting
+                      passengerCount: 2
+                      status: pending
+                      createdAt: 2026-06-26T15:45:10.123Z
+        '404':
+          description: No persisted trip request matches the provided identifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                notFound:
+                  value:
+                    success: false
+                    error:
+                      code: TRIP_REQUEST_NOT_FOUND
+                      message: Trip request not found
+        '500':
+          description: Unexpected repository failure handled centrally
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                internalError:
+                  value:
+                    success: false
+                    error:
+                      code: INTERNAL_SERVER_ERROR
+                      message: An unexpected error occurred
+components:
+  schemas:
+    TripRequest:
+      type: object
+      required:
+        - id
+        - requesterName
+        - origin
+        - destination
+        - departureAt
+        - returnAt
+        - purpose
+        - passengerCount
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+        requesterName:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        departureAt:
+          type: string
+          format: date-time
+        returnAt:
+          type: string
+          format: date-time
+        purpose:
+          type: string
+        passengerCount:
+          type: integer
+        status:
+          type: string
+          enum: [pending, canceled]
+        createdAt:
+          type: string
+          format: date-time
+    TripRequestListSuccessEnvelope:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripRequest'
+    TripRequestSuccessEnvelope:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: '#/components/schemas/TripRequest'
+    ErrorEnvelope:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              enum:
+                - TRIP_REQUEST_NOT_FOUND
+                - INTERNAL_SERVER_ERROR
+            message:
+              type: string
