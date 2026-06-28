@@ -1,5 +1,5 @@
 import type { GetHolidaysHandler } from '../controllers/get-holidays-controller.js'
-import { createHolidaysApiUnavailableError } from '../errors/app-error.js'
+import { AppError, createHolidaysApiUnavailableError } from '../errors/app-error.js'
 import {
   HolidaysProviderError,
   type HolidayRecord,
@@ -25,7 +25,13 @@ export function createGetHolidaysService(
         })
       }
 
-      throw error
+      if (error instanceof AppError) {
+        throw error
+      }
+
+      throw new AppError('INTERNAL_SERVER_ERROR', 'Internal server error', {
+        cause: error instanceof Error ? error : new Error(String(error)),
+      })
     }
   }
 }
