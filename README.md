@@ -377,6 +377,87 @@ Unexpected repository failure response: `500 Internal Server Error`
 }
 ```
 
+### `GET /holidays/:year`
+
+Retrieves Brazilian national holidays for one year in the standardized success envelope.
+
+Behavior:
+
+- The `year` path parameter accepts only numeric four-digit years from `1000` to `9999`.
+- Values such as `0000`, `0999`, `10000`, `abcd`, `20a5`, `25`, and `202` are rejected before any provider call.
+- Returns `200 OK` with `data` as an array.
+- Each holiday item contains exactly `date`, `name`, and `type`.
+- Unknown upstream fields are excluded from the HTTP response body.
+- The endpoint does not persist holiday data in PostgreSQL.
+- The endpoint does not read or mutate trip-request data.
+- Upstream non-success responses, timeouts, and invalid upstream payloads are normalized to `502 Bad Gateway` with `HOLIDAYS_API_UNAVAILABLE`.
+- Unexpected internal failures return `500 Internal Server Error` with the standardized error envelope and no leaked internal details.
+
+Success response: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "date": "2025-01-01",
+      "name": "Confraternizacao Universal",
+      "type": "national"
+    },
+    {
+      "date": "2025-04-21",
+      "name": "Tiradentes",
+      "type": "national"
+    }
+  ]
+}
+```
+
+Empty-list response: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": []
+}
+```
+
+Invalid-year response: `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "year must be a four-digit number between 1000 and 9999"
+  }
+}
+```
+
+Upstream-failure response: `502 Bad Gateway`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "HOLIDAYS_API_UNAVAILABLE",
+    "message": "Holidays API unavailable"
+  }
+}
+```
+
+Unexpected internal-failure response: `500 Internal Server Error`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INTERNAL_SERVER_ERROR",
+    "message": "Internal server error"
+  }
+}
+```
+
 ## Testing Notes
 
 - Validation failures do not call `HolidaysProvider.getNationalHolidays()`.
@@ -385,7 +466,7 @@ Unexpected repository failure response: `500 Internal Server Error`
 - `GET /trip-requests` tests use order-insensitive assertions for list contents because collection order is not guaranteed.
 - Retrieval failure tests assert `INTERNAL_SERVER_ERROR` without exposing internal repository details.
 - Cancellation failure tests assert the exact `Internal server error` message without exposing internal repository details.
-- Tests use injected `HolidaysProvider` fakes and never access the real BrasilAPI.
+- `GET /holidays/:year` tests use injected `HolidaysProvider` doubles or controlled `fetch` implementations, never access the real BrasilAPI, do not persist holiday data in PostgreSQL, and do not read or mutate trip-request data.
 
 ## Feature References
 
@@ -399,3 +480,8 @@ Unexpected repository failure response: `500 Internal Server Error`
 - Tasks 002: `specs/002-trip-request-retrieval/tasks.md`
 - Contract 002: `specs/002-trip-request-retrieval/contracts/trip-requests-retrieval.openapi.yaml`
 - Quickstart 002: `specs/002-trip-request-retrieval/quickstart.md`
+- Spec 004: `specs/004-national-holiday-retrieval/spec.md`
+- Plan 004: `specs/004-national-holiday-retrieval/plan.md`
+- Tasks 004: `specs/004-national-holiday-retrieval/tasks.md`
+- Contract 004: `specs/004-national-holiday-retrieval/contracts/holidays-retrieval.openapi.yaml`
+- Quickstart 004: `specs/004-national-holiday-retrieval/quickstart.md`
