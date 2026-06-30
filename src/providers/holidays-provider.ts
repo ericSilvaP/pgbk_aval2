@@ -2,6 +2,7 @@ export interface HolidayRecord {
   date: string
   name: string
   type: string
+  weekday: string
 }
 
 export class HolidaysProviderError extends Error {

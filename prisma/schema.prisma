@@ -26,3 +26,22 @@ model TripRequest {
 
   @@map("trip_requests")
 }
+
+model Holiday {
+  id      String   @id @default(uuid())
+  date    String
+  name    String
+  type    String
+  weekday String?
+  year    Int
+
+  @@unique([date, name])
+  @@map("holidays")
+}
+
+model HolidaySyncConfig {
+  year         Int      @id
+  lastSyncedAt DateTime @map("last_synced_at")
+
+  @@map("holiday_sync_configs")
+}
