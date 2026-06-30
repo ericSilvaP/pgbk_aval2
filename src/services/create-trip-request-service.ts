@@ -1,9 +1,6 @@
 import type { CreateTripRequestHandler } from '../controllers/create-trip-request-controller.js'
-import {
-  createHolidayTripNotAllowedError,
-  createHolidaysApiUnavailableError,
-  createValidationError,
-} from '../errors/app-error.js'
+import type { GetHolidaysHandler } from '../controllers/get-holidays-controller.js'
+import { createHolidayTripNotAllowedError, createValidationError } from '../errors/app-error.js'
 import type { HolidaysProvider } from '../providers/holidays-provider.js'
 import type { TripRequestRepository } from '../repositories/trip-request-repository.js'
 import type { CreateTripRequestInput } from '../validation/trip-request-schemas.js'
@@ -11,6 +8,7 @@ import type { CreateTripRequestInput } from '../validation/trip-request-schemas.
 export interface CreateTripRequestServiceDependencies {
   tripRequestRepository: TripRequestRepository
   holidaysProvider: HolidaysProvider
+  getHolidays: GetHolidaysHandler
 }
 
 function normalizeUtcDateTime(value: string, fieldName: 'departureAt' | 'returnAt'): string {
@@ -64,7 +62,7 @@ function extractDepartureYear(departureCivilDate: string): number {
 export function createCreateTripRequestService(
   dependencies: CreateTripRequestServiceDependencies,
 ): CreateTripRequestHandler {
-  const { tripRequestRepository, holidaysProvider } = dependencies
+  const { tripRequestRepository, getHolidays } = dependencies
 
   return async (input: CreateTripRequestInput) => {
     const departureAt = normalizeUtcDateTime(input.departureAt, 'departureAt')
@@ -76,15 +74,7 @@ export function createCreateTripRequestService(
     const departureCivilDate = extractDepartureCivilDate(departureAt)
     const departureYear = extractDepartureYear(departureCivilDate)
 
-    let holidays
-
-    try {
-      holidays = await holidaysProvider.getNationalHolidays(departureYear)
-    } catch (error) {
-      throw createHolidaysApiUnavailableError('national holidays are temporarily unavailable', {
-        cause: error,
-      })
-    }
+    const holidays = await getHolidays(departureYear)
 
     if (holidays.some((holiday) => holiday.date === departureCivilDate)) {
       throw createHolidayTripNotAllowedError('departureAt cannot fall on a national holiday')
